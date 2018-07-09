@@ -30,9 +30,8 @@ SEG-Y_ format. It consists of a fairly low-level *core* library, targeting
 library developers and written in C99, and multiple end-user facing libraries,
 most notably Python.
 
-.. _segyio: https://github.com/statoil/segyio
+.. _segyio: https://github.com/statoil/segyio/
 .. _SEG-Y: https://en.wikipedia.org/wiki/SEG-Y
-.. _numpy: http://www.numpy.org/
 
 Indices and tables
 ==================

@@ -271,3 +271,6 @@ in later sections. In short, segyio should be:
 - Fast
 - Portable
 - Stable
+
+.. _SEG-Y: https://en.wikipedia.org/wiki/SEG-Y
+.. _numpy: http://www.numpy.org/
