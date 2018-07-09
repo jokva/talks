@@ -255,7 +255,7 @@ This section fleshes out the context and requirements that underpins the desgin
 of segyio, and provides a rationale for decisions made, that will be discussed
 in later sections. In short, segyio should be:
 
-- Accomodate for libraries in different languages
+- Useful for creating new libraries (in different languages)
 - Fast
 - Portable
 - Stable
