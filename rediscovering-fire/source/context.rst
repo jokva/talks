@@ -179,8 +179,19 @@ language), so a lean core is very useful. That also means sometimes choosing bet
 safety for potential speed.
 
 That, in practice, means only a handful of languages are really an option. For
-segyio, we ended up on plain C99 for the core itself, but if that choice came
+segyio, we ended up with plain C99 for the core itself, but if that choice came
 up again it would be C++.
+
+The argument at the time was that reading SEG-Ys is mostly shuffling bytes and
+dealing with various floating-point representations (most of our files are in
+IBM floats), and that C++ helps little in that regard. C++ also means extra
+care must be taken not to allocate, or raise exceptions by accident.
+
+Since then, I've changed my mind - byte shuffling is not harder in C++, and the
+availablity of templates, standardad algorithms, **destructors** just makes
+some things so much easier, and I've lost count of how many times I thought to
+myself *this would've been so easy in C++*, at no real loss of leanness and
+speed. The interface itself would still be plain C, regardless.
 
 Portable
 ~~~~~~~~
