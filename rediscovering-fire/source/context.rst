@@ -130,14 +130,14 @@ Code example from `request docs <https://pypi.org/project/requests/>`_
 Code example from `numpy quickstart
 <https://docs.scipy.org/doc/numpy/user/quickstart.html>`_
 
-For requests, it's has a reasonable defaults, and the most simple use case,
-just fetching a remote web site, is as simple as ``requests.get(url)``. All
-other configuration is keyword arguments. Results of queries have a fairly
-limited set of interesting things to afterwards (determined by the HTTP
-protocol), so they're all *properties* on the returned object, no awkward get
-methods. Callers can inspect what they care about as they see fit (status,
-encoding etc.). The dynamic parts of a result, contents of the header, are read
-with the ubiquitous ``dict``.
+Requests has reasonable defaults, and the most simple use case, just fetching a
+remote web site, is as simple as ``requests.get(url)``. All other
+configurations are keyword arguments. Results of queries have a fairly limited
+set of interesting things to look at afterwards (given by the HTTP protocol),
+so they're all *properties* on the returned object, no awkward get methods.
+Callers can inspect what they care about as they see fit (status, encoding
+etc.). The dynamic parts of a result, contents of the header, are read with the
+ubiquitous ``dict``.
 
 Numpy share the same attributes, but for maths and not HTTP. Granted, numpy
 code can quickly get rather wieldy, but that's often a result of its
@@ -175,8 +175,8 @@ data processed faster, which means money.
 As a library writer, you never really get to assume how fast is *fast enough*
 for your clients, because you never know what requirements they have. You also
 don't really know what infrastructure and runtimes are around (save your host
-language), so a lean core is very useful. That also means sometimes choosing between potential
-safety for potential speed.
+language), so a lean core is very useful. That also means sometimes choosing
+between a safer design and a faster design.
 
 That, in practice, means only a handful of languages are really an option. For
 segyio, we ended up with plain C99 for the core itself, but if that choice came
@@ -251,7 +251,7 @@ languages was crucial to us, which heavily influenced the design.
 At the time of writing, a C++ front for segyio is in development. It's shaping
 up to look very different from the C core library, and intended for downstream
 consumption. We've worked it into a few in-house projects, but it's a living
-example of the reusability of the core library's design.
+example of the flexibility and repurposability of the core library design.
 
 About SEG-Y
 -----------
@@ -263,7 +263,7 @@ the data stored in this format, in a way that's quick and easy and robust.
 
 Summary
 -------
-This section fleshes out the context and requirements that underpins the desgin
+This section fleshes out the context and requirements that underpins the design
 of segyio, and provides a rationale for decisions made, that will be discussed
 in later sections. In short, segyio should be:
 
