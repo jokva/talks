@@ -22,6 +22,7 @@ Sections
    :maxdepth: 2
 
    context
+   allocation
 
 About segyio
 ============
