@@ -15,9 +15,11 @@ As the name implies, these lessions aren't new. Segyio draws inspiration from
 several libraries, and the relies on the experience of thousands of developers
 of the past and the present.
 
+Sections
+========
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    context
 
