@@ -6,12 +6,12 @@ today.
 
 Context and requirements
 ------------------------
-`SEG-Y <https://en.wikipedia.org/wiki/SEG-Y>`_ is a fairly old standard, built
-around in an age of magnetic tape and IBM-centric hardware. It has a lot of
-quirks, and there are lot of standard-violating files out there. We saw several
-implementations being developed and maintained by lone geoscientists scattered
-around the company, with varying quality and completeness. It's also a very
-duplicated effort, and a huge time sink.
+SEG-Y_ is a fairly old standard, built around in an age of magnetic tape and
+IBM-centric hardware. It has a lot of quirks, and there are lot of
+standard-violating files out there. We saw several implementations being
+developed and maintained by lone geoscientists scattered around the company,
+with varying quality and completeness. It's also a very duplicated effort, and
+a huge time sink.
 
 So we wanted a high-quality solution that would just take the pain away. But
 this raises the issue of language and operating system.
@@ -149,9 +149,10 @@ isn't a feeling that it simply wraps a Fortran or C library.
 For segyio, the goal was to make the library feel *natural*. Things should work
 as you'd expect in Python - arguments and types should be robust and work, the
 right errors should be raised, and combining features should result in what
-you'd expect. Conversly, it was deemed important not to have things work in a
-specific way just because the core library worked that way - Python could make
-its own decision and design choices.
+you'd expect. It should also integrate well with other popular libraries, most
+importantly numpy_. Consequently, it was deemed important not to have things
+work in a specific way just because the core library worked that way - Python
+could make its own decision and design choices.
 
 This has, to me, some surprising implications when designing a C library. A lot
 of interesting issues, things we often take for granted, come up - what if you
@@ -243,7 +244,7 @@ example of the reusability of the core library's design.
 
 About SEG-Y
 -----------
-The SEG-Y format was standardised in 1975, in an age where IBM dominated the
+The SEG-Y_ format was standardised in 1975, in an age where IBM dominated the
 computer industry, and magnetic tape was the primary mean of data exchange.
 Because of this, the standard details a lot of aspects that consumers don't
 really care that much about. What they do care about is the ability to access
