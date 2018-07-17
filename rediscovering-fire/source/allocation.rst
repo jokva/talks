@@ -49,12 +49,12 @@ While 1. is simple, and familiar to a seasoned PETSc dev programming in Python,
 it lends itself to a clumsy *Python* library. The REPL_ won't print data
 nicely, it won't be usable in ``for _ in _`` contexts, and ``len(x)`` fails.
 Numpy is the de facto standard package for scientific computing in Python, and
-one of its major benefits is behaving very similar to how Python's own list
-(``[]``) the ``numpy.ndarray`` really is. Programs using this library will
-technically be Python, but largely feel like C with Python syntax.
+one of its major selling points is how similar to Python's own list (``[]``)
+the ``numpy.ndarray`` really is. Programs using this library will technically
+be Python, but largely feel like C with Python syntax.
 
 Option 2. is a lot of work, but the resulting library ends up looking like
-Python code. Since PETSc protects types behind a pointers, no third party
+Python code. Since PETSc protects types behind a pointer, no third party
 library can be leveraged to help this work, or automate it, and it won't nicely
 integrate with Numpy or other libraries.
 
@@ -69,13 +69,13 @@ return a Numpy array from a function? Granted, the arrays can be copied inside
 python (assuming option 2), but that might introduce a significant overhead, or
 place a potential extra burden on clients.
 
-Both of these solutions means that a *substantial* amount of code has to be
-written to leverage the C core, and the resulting in a less ergonomic Python
-library.
+Both of these solutions mean that a *substantial* amount of code has to be
+written to leverage the C core, and solutions that make the final Python
+library worse.
 
 Allocate-and-return
 -------------------
-segyio reads chunks seismic data, *traces*, from a file. The very first
+segyio reads chunks of seismic data, *traces*, from a file. The very first
 prototype of segyio (that part never made it to the published repository)
 looked something like this:
 
@@ -125,18 +125,18 @@ caller doesn't need to know upfront how much memory is needed, it is now
 impossible to use this function in *any* other context than reading single
 traces, without taxing the allocator heavily, or copying all the data twice.
 
-While sometimes *convenient* to not worry about size, and just get nicely laid
-out memory back, remember that the consumers are *other library writers*, and
-it's safe to assume they can figure out much is needed - in fact, they often
-*want* to lay out memory in a certain way, or merge several C operations into a
-single, larger user-facing function.
+While it's *convenient* to never worry about array sizes and pre-allocation,
+and simply receive nicely organised memory, remember that the consumers are
+*other library writers*. It is safe to assume they can pre-allocate and manage
+memory needed - in fact, they often *want* to lay out memory in a certain way,
+or merge several C operations into a single, larger user-facing function.
 
 Thou shalt not assume how memory is managed
 -------------------------------------------
-The previous bit touches is the first rediscovery made in segyio, a detail I
-have sinced noticed is prevalent in a lot of the older libraries - almost all
-functions take their memory buffer as an argument, and few functions (visibly)
-allocates. Some examples from the C standard library:
+The previous paragraph touches on the first rediscovery made in segyio, a
+detail I have sinced noticed is prevalent in a lot of the older libraries -
+almost all functions take their memory buffer as an argument, and few functions
+(visibly) allocates. Some examples from the C standard library:
 
 .. code-block:: c
 
@@ -155,17 +155,18 @@ Memory is still necessary for a lot of functions to operate. In segyio, only
 one function (publically [#]_) allocates, the ``segy_open`` function. All other
 functions assume memory is allocated and meet expectations, and are managed
 externally. One common criticism of C and its standard library is its unsafety,
-which is very real, and this lession does nothing do alleviate that.
+which is very real, and requiring callers to manage all memory does nothing to
+help *safety*.
 
-This places a larger burden on host language library developers, but give a lot
-of flexibility. In segyio's Python extension, all memory is allocated by
-creating empty Numpy array *in Python*, so even the Python-C layer no
-allocation is done, and memory is properly registered with the Python runtime.
+This places a larger burden on developers, but in return gives a lot of
+flexibility. In segyio's Python extension, all memory is allocated by creating
+empty Numpy array *in Python*, so even in the Python-C layer no allocation is
+done. Numpy ensures all memory is properly registered with the Python runtime.
 In fact, the extension code does not know at all that it is Numpy that provides
 the memory - all it sees is a `buffer object`_, and the Python code is free to
-replace Numpy with something else. This has proven to scale very for segyio,
-where resource allocation has been rewritten at least three times (invisibly to
-the user).
+replace Numpy with something else. This has proven to scale very well for
+segyio, where resource allocation has been rewritten at least three times
+(invisibly to the user).
 
 For a motivating example, consider the following Python program, which prints
 the mean value of every individual trace:
@@ -176,10 +177,10 @@ the mean value of every individual trace:
         print(trace.mean())
 
 This allocates one, 1, buffer under the hood, and reuses that, since it knows
-it's in an iterable context, and that no modifications o the ``trace`` variable
-will carry on to the next iteration. I measured this by running it ten million
-times on a simple file, and found that re-using the buffer *doubled* the speed
-of the program.
+it's in an iterable context, and that no modifications of the ``trace``
+variable will carry on to the next iteration. I measured this by running it ten
+million times on a simple file, and found that re-using the buffer *doubled*
+the speed of the program.
 
 This would not have been possible if the core did not work with caller-provided
 buffers.
@@ -190,15 +191,21 @@ at the cost of documenting expectations and requirements.
 
 Summary
 -------
-This section discussed the drawbacks of *hiding allocations*, and returning
-freshly allocated memory from functions with the expectation that callers
-release it later, and demonstrates why libraries for libraries should always
-assume its memory is externally managed, and take it by argument.
+This section discussed the drawbacks of *visible allocations*. A core library
+should not return freshly allocated memory from functions with the expectation
+that callers release it later. It demonstrates why libraries for libraries
+should always assume its memory is externally managed, and functions that need
+dynamic memory should take it by argument.
 
-Briefly, assuming memory is allocated, managed, and correct makes the library
-simpler, and leaves the author of the module using the library the flexbility
-needed to make the right choices *for that environment*. Choices that are
-drastically different in Python, C++, Common Lisp, and Julia.
+Briefly, assuming memory is allocated, managed, and correct, ensures that:
+
+- The library is simple to implement
+- Few assumptions about end usage
+- Provides users with flexibility to make the right choice *for the target
+  environment*
+
+How to interact with users is drastically different in Python, C++, Common Lisp,
+and Julia, and the core library should reflect that.
 
 .. [#] ``segy_readsubtr`` and ``segy_writesubtr`` will allocate and free upon
        when reading non-contiguous ranges, unless the ``rangebuf`` parameter is
