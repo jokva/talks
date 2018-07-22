@@ -23,6 +23,7 @@ Sections
 
    context
    allocation
+   opaque
 
 About segyio
 ============
