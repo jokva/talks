@@ -9,11 +9,12 @@ effect on overall library design.
 
 Half of Common Lisp
 -------------------
-C and its standard library (I'm deliberately not considering common unix
-libraries here) is pretty tiny, so for a very long time, large C libraries have
+C, and its standard library (I'm deliberately not considering common unix
+libraries here), are pretty tiny. For a very long time, large C programs have
 assumed that virtually nothing pre-written was available, and consequently
-written it for their project.  This is so common it's known as `Greenspun's
-tenth rule <https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule>`_:
+implemented common things for their projects. This is so common it's known as
+`Greenspun's tenth rule
+<https://en.wikipedia.org/wiki/Greenspun%27s_tenth_rule>`_:
 
     Any sufficiently complicated C or Fortran program contains an ad-hoc,
     informally-specified, bug-ridden, slow implementation of half of Common
