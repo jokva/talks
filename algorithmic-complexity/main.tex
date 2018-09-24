@@ -1,0 +1,458 @@
+\documentclass[pdf]{beamer}
+
+\setbeamercovered{invisible}
+\setbeamercovered{again covered={\opaqueness<1->{15}}}
+
+\mode<presentation>{}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+
+\RequirePackage{color}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\RequirePackage{listings}
+\lstdefinestyle{python}{
+    language = Python,
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style = Python}
+
+\RequirePackage{siunitx}
+\DeclareSIUnit\year{yr}
+
+\RequirePackage{adjustbox}
+\RequirePackage{graphics}
+
+\RequirePackage{algorithmicx}
+
+\title{Estimation of computational complexity}
+\author{Jørgen Kvalsvik}
+\date{September 2018}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Motivation}
+    Algorithmic improvements are \emph{the} most impactful changes you can make
+    to a program
+\end{frame}
+
+\begin{frame}
+    \frametitle{Outline}
+    \tableofcontents
+\end{frame}
+
+\section{Glossary}
+\tableofcontents[currentsection]
+
+\begin{frame}
+\frametitle{Glossry}
+    \begin{block}{Necessary vocab}
+        \begin{itemize}
+            \item Algorithm
+            \item Time and space
+            \item Array, vector
+            \item Linked list
+            \item Dictionary
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+%
+% - Best/worst/average case
+%
+\section{Best/worst/average case}
+\tableofcontents[currentsection]
+
+\begin{frame}{Best/worst/average case}
+    All three terms describe an algorithm's behaviour under different
+    conditions
+    \begin{description}
+        \item [Best]    Performance under \emph{ideal} input
+        \item [Worst]   Performance under \emph{worst} input
+        \item [Average] Performance under \emph{any other} input
+    \end{description}
+\end{frame}
+
+\begin{frame}{Best/worst/average case}
+    \begin{itemize}
+        \item We use the same vocabulary for \emph{time} and \emph{space}.
+        \item \emph{Worst}- and \emph{average} most interesting
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Best/worst/average case: example}
+
+    \begin{problem}
+        Let $A$ be an unsorted array of length $n$, $f(A, x)$ a function that
+        finds $x$ in $A$
+    \end{problem}
+
+    \begin{itemize}[<+>]
+        \item What adds to execution time (cost)?
+        \item How good is the best case?
+        \item How bad is the worst case?
+        \item How good is the average case?
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Best/worst/average case: solution}
+
+    \begin{block}{Solution}
+        \begin{description}[<+>]
+            \item [Cost]    Access and comparison ($ == $)
+            \item [Best]    $x$ is first item, $1$ comparison
+            \item [Worst]   $x$ is last item, $n$ comparisons
+            \item [Average] $\frac{n}{2}$ comparisons
+        \end{description}
+    \end{block}
+
+    \uncover<+>{Worst- and average case increase with $n$}
+\end{frame}
+
+\section{Histoire d'O}
+\tableofcontents[currentsection]
+
+\begin{frame}{Big O notation}
+    \begin{definition}[Asymptotic notation]
+        Asymptotic, or \emph{big O}, notation is a notation for the worst-case
+        \alert{growth} in time/space as a \alert{function of input size}.
+    \end{definition}
+\end{frame}
+
+\begin{frame}{To infinity and beyond}
+    Asymptotic behaviour come into effect when input is \emph{very} large
+
+    \begin{block}{Growth is not affected by}
+        \begin{itemize}[<+>]
+            \item Constant factors
+            \item Lower-order terms
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{}<+->
+        \begin{equation*}
+            O(n) = O(n + c) = O(n + log(n))
+        \end{equation*}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Note}<+->
+        Big O only describes bound on \alert{growth} in the \alert{worst case}.
+    \end{block}
+
+    \begin{block}{}<+->
+        Some algorithms with better complexity have \emph{worse} behaviour for
+        \emph{small} inputs, and inputs are often small
+    \end{block}
+
+    \begin{block}{}<+->
+        For small inputs, constants often dominate
+    \end{block}
+\end{frame}
+
+\newcommand{\Ologn}     {$O(log(n))$}
+\newcommand{\On}        {$O(n)$}
+\newcommand{\Onlogn}    {$O(n \cdot log(n))$}
+\newcommand{\Oexp}[1]   {$O(n^{#1})$}
+
+\newcommand{\usec}[1]{\si{\num{#1}\us}}
+\newcommand{\msec}[1]{\si{\num{#1}\ms}}
+\newcommand{\Sec} [1]{\si{\num{#1}\s}}
+\newcommand{\Min} [1]{\si{\num{#1}\min}}
+\newcommand{\Hr}  [1]{\si{\num{#1}\hour}}
+\newcommand{\Day} [1]{\si{\num{#1}\day}}
+
+\begin{frame}{Compare growth rates}
+
+    \begin{tabular}{c | c c c c c}
+        $n$     & $O(1)$    & \Ologn     & \On      & \Onlogn   & \Oexp{2}   \\
+        \hline
+        $10^{2}$ & \usec{1} & \usec{1}  & \usec{1}  & \usec{1}  & \usec{1}   \\
+        $10^{3}$ & \usec{1} & \usec{1.5}& \usec{10} & \usec{15} & \usec{100} \\
+        $10^{4}$ & \usec{1} & \usec{2}  & \usec{100}& \usec{200}& \msec{10}  \\
+        $10^{5}$ & \usec{1} & \usec{2.5}& \msec{1}  & \msec{2.5}& \Sec{1}    \\
+        $10^{6}$ & \usec{1} & \usec{3}  & \msec{10} & \msec{30} & \Min{1.7}  \\
+        $10^{7}$ & \usec{1} & \usec{3.5}& \msec{100}& \msec{350}& \Hr{2.8}   \\
+        $10^{8}$ & \usec{1} & \usec{4}  & \Sec{1}   & \Sec{4}   & \Day{11.7} \\
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Compare growth rates}
+
+    \begin{center}
+        \begin{tabular}{c | c c}
+            $n$     & \Oexp{2} & $O(2^{n})$         \\
+            \hline
+            $100$ & \usec{1}   & \usec{1}           \\
+            $110$ & \usec{1.2} & \msec{1}           \\
+            $120$ & \usec{1.4} & \Sec{1}            \\
+            $130$ & \usec{1.7} & \Min{18}           \\
+            $140$ & \usec{2}   & \Day{13}           \\
+            $150$ & \usec{2.3} & \si{37\year}       \\
+            $160$ & \usec{2.6} & \si{37000\year}    \\
+        \end{tabular}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Lesson}
+    Programs with \Oexp{2} complexity or worse get impractical \emph{very}
+    fast
+\end{frame}
+
+\section{Estimating complexity}
+\tableofcontents[currentsection]
+
+\begin{frame}
+    \begin{block}{Tools}
+        \begin{itemize}[<+->]
+            \item Ignore constant factors
+            \item Eliminate lower cost terms
+            \item Consider only what scales with input
+            \item Know the cost of \emph{that other stuff}
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{That other stuff}
+    \only<+->{}
+    \begin{tabular}{l | l}
+        Array access            & \only<+->{\color[rgb]{0, 0.6, 0}{$O(1)$}}  \\
+        Dict access             & \only<+->{\color[rgb]{0, 0.6, 0}{$O(1)$}}  \\
+        Dict insertion          & \only<+->{\color[rgb]{0, 0.6, 0}{$O(1)$}}  \\
+        Array insertion back    & \only<+->{\color[rgb]{0, 0.6, 0}{$O(1)$}}  \\
+        Search sorted list      & \only<+->{\color[rgb]{0, 0.6, 0}{\Ologn}}  \\
+        Search unsorted list    & \only<+->{\color[rgb]{0, 0.6, 0}{\On}}     \\
+        Array insertion front   & \only<+->{\color[rgb]{0, 0.6, 0}{\On}}     \\
+        Sorting                 & \only<+->{\color[rgb]{0, 0.6, 0}{\Onlogn}} \\
+    \end{tabular}
+\end{frame}
+
+\begin{frame}{Estimation}
+    \begin{block}{Count loops}<+->
+        \begin{itemize}[<+->]
+            \item Every loop is another order of $n$
+            \item First loop is \On, second is \Oexp{2}
+            \item Nesting is \emph{multiplicative}
+        \end{itemize}
+    \end{block}
+
+    \uncover<+>{
+        Every new phase is \emph{additive}
+    }
+\end{frame}
+
+\begin{frame}{Ding-ding-ding}
+    \uncover<+->{Highest term wins}
+    \uncover<+>{
+        \begin{equation*}
+            O(n^{2} + n + c) = O(n^{2})
+        \end{equation*}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Loop counter}
+    \begin{lstlisting}[style = Python]
+        def cartesian(xs, ys):
+            cart = []
+            for x in xs:
+                for y in ys:
+                    cart.append((x, y))
+
+            return cart
+    \end{lstlisting}
+
+    What's the complexity?
+\end{frame}
+
+\begin{frame}{Breakdown}
+    \begin{tabular}{l | l}
+        \lstinline!cart = []!   & \uncover<2,6->{$O(1)$}    \\
+        \lstinline!for x in xs! & \uncover<3,6->{$O(n)$}    \\
+        \lstinline!for y in ys! & \uncover<4,6->{$O(m)$}    \\
+        \lstinline!cart.append! & \uncover<5,6->{$O(1)$}    \\
+    \end{tabular}
+
+    \begin{block}{Total}
+        \begin{equation*}
+            \onslide<1->{O(}
+                \onslide<2->{1}
+                \onslide<3->{+ n}
+                \onslide<4->{\cdot n}
+                \onslide<5->{\cdot 1}
+                \onslide<1->{)}
+            \onslide<6->{= O(nm)}
+        \end{equation*}
+    \end{block}
+
+    \uncover<7->{In practice \Oexp{2}}
+\end{frame}
+
+\begin{frame}[fragile]{Sort in front of cart}
+    \begin{lstlisting}[style = Python]
+        xs = read_input()
+        cart1 = cartesian(xs, xs)
+        xs.sort()
+        cart2 = cartesian(xs, xs)
+    \end{lstlisting}
+
+    What's the complexity?
+\end{frame}
+
+\begin{frame}{Breakdown}
+    \begin{tabular}{l | l}
+        \lstinline!read_input!  & \uncover<2,6->{$O(n)$}        \\
+        \lstinline!cartesian!   & \uncover<3,6->{$O(n^{2})$}    \\
+        \lstinline!xs.sort!     & \uncover<4,6->{$O(nlog(n))$}  \\
+        \lstinline!cartesian!   & \uncover<5,6->{$O(n^{2})$}    \\
+    \end{tabular}
+
+    \begin{block}{Total}
+        \begin{equation*}
+            \onslide<1-> {O(}
+                \onslide<2->{n}
+                \only<3-5>{+ n^{2}}
+                \onslide<4->{ + n \cdot log(n)}
+                \only<5>{    + n^{2}}
+                \only<6->{    + 2 n^{2}}
+                \onslide<1->)
+            \onslide<7-> = O(n^{2})
+        \end{equation*}
+    \end{block}
+
+    \uncover<7-> Highest term wins
+\end{frame}
+
+\section{Choosing the worse algorithm}
+\tableofcontents[currentsection]
+
+\begin{frame}{Be quick or be merged}
+    \begin{block}{}<+>
+        Some algorithms are worse on paper, but perform better in practice
+    \end{block}
+
+    \begin{block}{Sorting}<+->
+        \begin{adjustbox}{max width=\textwidth}
+
+            \begin{tabular}{c | c c c c}
+                Algorithm & Time (best) & Time (worst) & Time (avg) & Space  \\
+                \hline
+                Quicksort & \Onlogn     & \Oexp{2}     & \Onlogn    & \On    \\
+                Mergesort & \Onlogn     & \Onlogn      & \Onlogn    & \On    \\
+                Heapsort  & \Onlogn     & \Onlogn      & \Onlogn    & $O(1)$ \\
+                Insertion & \On         & \Oexp{2}     & \Oexp{2}   & $O(1)$ \\
+            \end{tabular}
+
+        \end{adjustbox}
+    \end{block}
+
+    \begin{block}{}<+->
+        Why don't we always heapsort?
+    \end{block}
+\end{frame}
+
+\let\oldquote\quote
+\let\endoldquote\endquote
+\renewenvironment{quote}[2][]{
+
+    \if\relax\detokenize{#1}\relax
+       \def\quoteauthor{#2}%
+    \else
+        \def\quoteauthor{#2~---~#1}%
+    \fi
+
+    \oldquote
+}{
+    \par\nobreak\smallskip\hfill\quoteauthor%
+    \endoldquote\addvspace{\bigskipamount}
+}
+
+\begin{frame}{Shoulders of giants}
+    \begin{block}{Quote of the day}<+->
+        \begin{quote}{Donald Knuth}
+            Premature optimisation is the root of all evil
+        \end{quote}
+    \end{block}
+
+    \begin{block}{}<+->
+        Write clear code - don't lose a $O(n^{3}) \rightarrow O(n \cdot
+        log(n))$ optimisation chasing faster array access
+    \end{block}
+\end{frame}
+
+\begin{frame}{Shoulders of giants}
+    \begin{block}{Don't forget constants}<+>
+        \begin{align*}
+            O(0.01 n^{3} + 10 n + 5) &= O(n^{3}) \\
+            O(2000 n^{2} + 10)       &= O(n^{2})
+        \end{align*}
+    \end{block}
+\end{frame}
+
+\begin{frame}{A note on growth}
+    \includegraphics[width=\textwidth]{growth1.png}
+\end{frame}
+
+\begin{frame}{A note on growth}
+    \includegraphics[width=\textwidth]{growth2.png}
+\end{frame}
+
+\begin{frame}[fragile]{Repeated-filter vs composed-filter}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \begin{block}{Sequential}
+            \begin{algorithmic}
+                \State $xs \gets input$
+                \State $x \gets f(xs)$
+                \State $y \gets h(x)$
+                \State $z \gets g(y)$
+            \end{algorithmic}
+        \end{block}
+
+        \column{0.5\textwidth}
+        \begin{block}{Composed}
+            \begin{algorithmic}
+                \State $xs \gets input$
+                \State $f' \gets g \circ h \circ f$
+                \State $z \gets f'(xs)$
+            \end{algorithmic}
+        \end{block}
+    \end{columns}
+
+    \begin{block}{}<+>
+        Composed makes fewer passes over data
+    \end{block}
+\end{frame}
+
+\section{Summary}
+\tableofcontents[currentsection]
+
+\begin{frame}
+    \begin{itemize}[<+->]
+        \item Know the cost of basic operations
+        \item Count nested loops
+        \item Prefer clear code
+        \item Two linear programs may behave \emph{very} differently
+        \item Complexity is \emph{not} sufficient to estimate performance
+    \end{itemize}
+\end{frame}
+
+\end{document}
