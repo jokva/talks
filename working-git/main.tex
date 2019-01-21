@@ -1,0 +1,134 @@
+\documentclass[pdf]{beamer}
+
+\setbeamercovered{invisible}
+\setbeamercovered{again covered={\opaqueness<1->{15}}}
+
+\mode<presentation>{}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{ae,aecompl}
+
+%\RequirePackage{color}
+%\definecolor{codegreen}{rgb}{0,0.6,0}
+%\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+%\definecolor{codepurple}{rgb}{0.58,0,0.82}
+%\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+%
+%\RequirePackage{listings}
+%\lstdefinestyle{python}{
+%    language = Python,
+%    commentstyle=\color{codegreen},
+%    keywordstyle=\color{magenta},
+%    numberstyle=\tiny\color{codegray},
+%    stringstyle=\color{codepurple},
+%    basicstyle=\footnotesize,
+%    breakatwhitespace=false,
+%    breaklines=true,
+%    captionpos=b,
+%    keepspaces=true,
+%    showspaces=false,
+%    showstringspaces=false,
+%    showtabs=false,
+%    tabsize=2
+%}
+%\lstset{style = Python}
+%
+%\RequirePackage{siunitx}
+%\DeclareSIUnit\year{yr}
+%
+%\RequirePackage{adjustbox}
+%\RequirePackage{graphics}
+%
+%\RequirePackage{algorithmicx}
+
+\title{Working with git}
+\author{Jørgen Kvalsvik}
+\date{January 2019}
+
+\begin{document}
+\maketitle
+
+\begin{frame}
+    \frametitle{Outline}
+    \tableofcontents
+\end{frame}
+
+\section{Basic concepts}
+\tableofcontents[currentsection]
+
+\begin{frame}{The commit}
+    At it's core, git is a key-value store
+
+    \begin{description}
+        \item [Key] Object hash
+        \item [Value] Tree snapshot + parent pointers
+    \end{description}
+
+    \pause
+    The commit is \emph{immutable}, any change is a new \emph{snapshot}, and a
+    new \emph{hash}
+\end{frame}
+
+\begin{frame}[fragile]{The history}
+    Because of the parent pointer, the \textbf{commit} knows all previous
+    snapshots (by chasing parents) all the way to the \emph{initial commit}
+
+    \begin{block}
+        {A <-- B <-- C <-- D master}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{The branch}
+    \begin{block}{}<+>
+        Because commits are immutable, \textbf{branches} are cheap.
+        Essentially, they're \emph{movable} pointers
+    \end{block}
+
+    \begin{block}{}<+>
+        \verb|git commit| moves the pointer of your \emph{current} branch (called
+        HEAD) one commit
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{The merge}
+The \textbf{merge} is combining a set of \emph{commits (hash + snapshot +
+pointers)} into a new \emph{commit}
+
+\begin{verbatim}
+      A---B---C topic 1
+     /         \
+D---E---F---G---J master
+         \     /
+          H---I topic 2
+\end{verbatim}
+\end{frame}
+
+\begin{frame}[fragile]{The rebase}
+The \textbf{rebase} is \emph{reapplying} a set of commits onto a new tip
+
+    \begin{block}{}<+>
+        \begin{verbatim}
+      A---B---C topic
+     /
+D---E---F---G---J master \end{verbatim}
+    \end{block}
+    \begin{block}{}<+>
+    \begin{verbatim}
+                  A---B---C master + topic
+                 /
+D---E---F---G---J \end{verbatim}
+
+        Logically, A was developed after J
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{The rebase}
+    \begin{quote}
+        What and why?
+
+        \verb|git rebase HEAD^5|
+    \end{quote}
+\end{frame}
+
+\end{document}
