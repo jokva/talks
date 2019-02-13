@@ -1,0 +1,51 @@
+\begin{tikzpicture}[>=latex]
+\tikzset{
+mymat/.style={
+  matrix of math nodes,
+  text height=2.5ex,
+  text depth=0.75ex,
+  text width=3.25ex,
+  align=center,
+  column sep=-\pgflinewidth,
+  style={nodes=draw}
+  },
+mymats/.style={
+  matrix,
+  align=center,
+  style={nodes={draw, minimum height=4cm}},
+  column sep=4\pgflinewidth
+  }
+}
+
+\matrix [mymat, anchor=west] at (0,0)
+(ftrace)
+{
+    0 & 1 & 2 & \node[draw=none, text width=4ex] {\dots}; & n \\
+};
+\matrix [mymats, anchor=west] at (0,-4)
+(segy)
+{
+    \node [fill=gray!20, text width=8ex] {\rotatebox{90}{textual file header}}; &
+    \node [fill=gray!20, text width=3ex] {\rotatebox{90}{binary file header}};  &
+    \node (h1) [text width=3ex]          {\rotatebox{90}{1st trace header}}; &
+    \node (t1) [text width=8ex]          {\rotatebox{90}{1st trace}}; &
+    \node (h2) [text width=3ex]          {\rotatebox{90}{2nd trace header}}; &
+    \node (t2) [text width=8ex]          {\rotatebox{90}{2nd trace}}; &
+    \node (h3) [text width=3ex]          {\rotatebox{90}{3rd trace header}}; &
+    \node (t3) [text width=8ex]          {\rotatebox{90}{3rd trace}}; &
+    \node [draw=none, text width=5ex]    {$\dots$}; &
+    \node (hn) [text width=3ex]          {\rotatebox{90}{$n$th trace header}}; &
+    \node (tn) [text width=8ex]          {\rotatebox{90}{$n$th trace}}; \\
+};
+
+\node[left=0pt of ftrace](ftracelabel) {\verb|f.trace|};
+\node[left=0pt of segy](filelabel) {SEG-Y};
+
+\begin{scope}[shorten <= -2pt]
+    \draw[*->] (ftrace-1-1.south) to[looseness=0, out=-90] (t1.north west);
+    \draw[*->] (ftrace-1-2.south) to[looseness=0, out=-90] (t2.north west);
+    \draw[*->] (ftrace-1-3.south) to[looseness=0, out=-90] (t3.north west);
+    \draw[*->] (ftrace-1-5.south) to[looseness=0, out=-90] (tn.north west);
+\end{scope}
+
+\end{tikzpicture}
