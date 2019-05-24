@@ -1,8 +1,10 @@
+PDFLATEX := pdflatex
+BIBTEX := bibtex
 OUTPUT := segyio-description
 
 all:
 	$(PDFLATEX) -output-format=pdf $(OUTPUT)
-	$(BIBTEX) bibtex $(OUTPUT)
+	$(BIBTEX) $(OUTPUT)
 	$(PDFLATEX) -output-format=pdf $(OUTPUT)
 	$(PDFLATEX) -output-format=pdf $(OUTPUT)
 
