@@ -1,0 +1,22 @@
+digraph "callgraph" {
+  node [style = rounded, shape = box];
+  F558e86363678 [label="fseek"];
+  F558e86363eb8 [label="fread"];
+  F558e86365328 [label="segy_seek"];
+  F558e8637a908 [label="segyio_python::fd::gettr"];
+  F558e8637b7a8 [label="segy_readtrace"];
+  F558e8637bc98 [label="segy_readsubtr"];
+  F558e8637c168 [label="segy_to_native"];
+  F558e8637c5e8 [label="segy_native_byteswap"];
+  F558e863aaf78 [label="_IO_seekoff_unlocked"];
+  F558e863b3bb8 [label="_IO_sgetn"];
+  F558e86363678 -> F558e863aaf78 [weight=1];
+  F558e86363eb8 -> F558e863b3bb8 [weight=1];
+  F558e86365328 -> F558e86363678 [weight=2];
+  F558e8637a908 -> F558e8637b7a8 [weight=2];
+  F558e8637a908 -> F558e8637c168 [weight=2];
+  F558e8637b7a8 -> F558e8637bc98 [weight=2];
+  F558e8637bc98 -> F558e86363eb8 [weight=2];
+  F558e8637bc98 -> F558e86365328 [weight=2];
+  F558e8637c168 -> F558e8637c5e8 [weight=2];
+}
