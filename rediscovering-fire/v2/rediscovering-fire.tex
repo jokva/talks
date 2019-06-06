@@ -1,0 +1,854 @@
+\documentclass[pdf]{beamer}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
+
+% for speaker notes etc
+\RequirePackage{pgfpages}
+%\setbeameroption{show notes on second screen}
+%\setbeameroption{show only notes}
+\setbeamercolor{note page}{bg=white}
+\setbeamercolor{note title}{bg=white!90!black, fg=black}
+\setbeamercolor{note date}{parent=note title}
+
+\beamertemplatenavigationsymbolsempty
+\AtBeginSection[]{
+    \begin{frame}
+        \vfill
+        \centering
+        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+            \usebeamerfont{title}\insertsectionhead\par%
+        \end{beamercolorbox}
+        \vfill
+    \end{frame}
+}
+
+\RequirePackage{listings}
+\lstset{escapeinside={<@}{@>}}
+\lstset{basicstyle=\ttfamily}
+\lstset{moredelim=**[is][\color{red}]{@}{@}}
+
+\RequirePackage{algpseudocode}
+
+\mode<presentation>{}
+
+\title{Rediscovering fire}
+\subtitle{On building portable, multi-language libraries}
+\author{Jørgen Kvalsvik <jokva@equinor.com>}
+\titlegraphic{\includegraphics[width=0.33\textwidth]{equinor-red.eps}}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Outline}
+    \tableofcontents
+
+    \note{
+        \begin{itemize}
+            \item The title alludes to this really being a curated list of what
+                  the \emph{field} has known for a long time
+            \item Short intro, me + company
+            \item Developed a few libraries to work with O\&G file formats
+            \item segyio, dlisio, ecl - all largely with the same fundamental
+                  architecture
+            \item New appreciation to \emph{why} other software is designed the
+                  way it is: "so \emph{that's} they do it"
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{}
+        The examples and lessons are from segyio
+    \end{block}
+
+    \begin{block}{}
+        \begin{itemize}
+            \item segyio is free software, LGPLv3
+            \item Available in Debian, Ubuntu, pypi (pip)
+            \item Core is C99
+            \item Fronts in C++11, Python2, Python3
+            \item The de-facto library for reading/writing seismic
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{}
+        github.com/equinor/segyio
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{}
+        \begin{itemize}
+            \item Downloads last day: 174
+            \item Downloads last week: 1,883
+            \item Downloads last month: 11,879
+        \end{itemize}
+    \end{block}
+
+    https://pypistats.org/packages/segyio
+
+    21.06.2019
+\end{frame}
+
+\section{Why}
+\note{Let's start with some \emph{whys}}
+
+\begin{frame}
+    \begin{block}{The goal}
+        \begin{itemize}
+            \item A single, fast, portable core
+            \item Multiple, \emph{integrated} language fronts
+            \item Clean upgrade paths
+        \end{itemize}
+    \end{block}
+
+    A library for building \emph{libraries}
+
+    \note{
+        \begin{itemize}
+            \item Differs from direct language bindings - language bindings
+                  are \emph{calling} some third-party solution, then parsing
+                  the results
+            \item segyio runs on different CPUs, including S390 and multiple
+                  operating systems
+            \item Emphasize \emph{feeling integrated}
+            \item \emph{should feel right} on next page
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    User-facing library should \emph{feel right}
+
+    \note{
+        \begin{block}{}
+            Want more than just to essentially invoke some program from Python
+            - want to be able to manipulate input and state as you go and
+            \emph{have that be effectful}. Simply copying structures for
+            post-processing is not enough. A good example of this is numpy, you
+            never really notice (other than speed) that it's native code
+        \end{block}
+
+        \begin{block}{}
+            Also want to be able to maintain the code without changing clients,
+            and be forward- and backwards compatible to the largest extent
+            possible.
+
+            Then there's style. Make sure to rename and style according to the
+            \emph{host} language's conventions. There are already too many
+            camel-case libs in Python
+        \end{block}
+
+        \begin{block}{}
+            Let's dive right into some details and definitions.
+        \end{block}
+    }
+\end{frame}
+
+\section{API + ABI}
+\note{
+    \begin{block}{}
+        In a lot of languages, like all the scripting ones, there is no concept
+        of the ABI, because everything is exchanged as source code.  When
+        dealing with native code like Fortran, C++, Rust (less so because it's
+        always statically linked) binary compatibility between libraries is
+        quite important.
+    \end{block}
+
+    \begin{block}{}
+        Maintaining ABI stability in particular is not always straight-forward,
+        it limits the changes you can do. Some things get somewhat encumbered
+        by it, but for a good reason - e.g. Qt. Let's have a quick look at what
+        it all really means.
+    \end{block}
+}
+
+\begin{frame}
+    \begin{block}{API}
+        \begin{itemize}
+            \item Application Programming Interface
+            \item Function signatures and types
+            \item Source compatibility
+            \item Compile-time property
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Programs that worked with the old version, work with
+                  recompilation with the new version
+            \item Some changes maintain API but not ABI compatibility, e.g. int
+                  $\rightarrow$ long
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{ABI}
+        \begin{itemize}
+            \item Application Binary Interface
+            \item Data type, size, alignment
+            \item Run-time property
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Programs compiled against the old version also work, without
+                  recompilation, with the new version
+            \item Compatibility is usually only considered inside same
+                  toolchain
+        \end{itemize}
+
+        Maintaining all of this makes clients happy because their code doesn't
+        break, so hopefully they update more, and it makes updating easier,
+        just drop in an so/dll
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Rules for ABI+ABI stability}
+        \begin{itemize}
+            \item Never remove functions
+            \item Never change arguments
+            \item Never change structs
+            \item Adding is fine
+        \end{itemize}
+    \end{block}
+
+    \note{
+        These are good guidelines, but not a complete rule set. With the three
+        nevers, the API+ABI should remain stable
+    }
+\end{frame}
+
+\section{Design for primitive types}
+\note{
+    \begin{block}{}
+        Let's talk a bit about how we accomplish our goals. It starts with an
+        emphasis on designing around primitive types.
+    \end{block}
+
+    \begin{block}{}
+        First of all, what are they?
+    \end{block}
+}
+
+\begin{frame}
+    \begin{block}{Primitive types}
+        \begin{itemize}
+            \item int, float, pointer etc
+            \item Avoid structs
+            \item Easy to work with, size known an universal
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Structs are also sometimes referred to as \emph{aggregate
+                  data types}
+            \item Structs in the API are nice for C, but puts many requirements
+                  on callers. In practice, ints and char* and floats usually
+                  cut it
+            \item All kinds of FFIs work well with primitive types, but have
+                  more problems with structs. Runtimes can usually convert
+                  to/from primitives automatically, but structs need to be
+                  replicated and force a certain, maybe impractical,
+                  representation in the host language
+            \item Let's look at an example to understand \textbf{why}
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{C}
+        \begin{lstlisting}
+struct addrinfo {
+    int flags;
+    int family;
+    int protocol;
+};
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{python/ctypes}
+        \begin{lstlisting}
+import ctypes
+class Addrinfo(ctypes.Structure):
+    _fields_ = [
+        ("flags",    ctypes.c_int),
+        ("family",   ctypes.c_int),
+        ("protocol", ctypes.c_int),
+    ]
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Simplified addrinfo from C
+            \item Output of getaddrinfo function
+            \item Python struct is pretty awkward
+            \item But could be hidden in lib so that's ok
+        \end{itemize}
+
+        Let's see it in action
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+addrinfo = Addrinfo()
+libc.getaddrinfo(ctypes.byref(addrinfo))
+    \end{lstlisting}
+
+    \note{
+        This Python code creates an empty Addrinfo struct, and passes a pointer
+        into it to our getaddrinfo function. This is not so bad, but:
+        \begin{itemize}
+            \item Forces us to make compatible structs, often creating a
+                  mirrored, duplicated interface in Python (with no or little
+                  consistency checking!)
+            \item Only used for the function call, we probably don't want to
+            \item It doesn't feel very integrated, doesn't look like python
+            \item If it did, it would've returned an object, taking no args
+            \item Must stick it in a lib anyway, so not so bad, but we cannot
+                  expose the native functionality directly
+            \item The members are ctypes, but want \emph{native}
+                  Python, can't keep using cint
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{}
+    \begin{block}{}<+->
+        \begin{lstlisting}
+>>> import ctypes
+>>> ctypes.c_int(10).value
+10
+>>> ctypes.c_int(10) + 5
+Traceback (most recent call last):
+File "<stdin>", line 1, in <module>
+TypeError: unsupported operand type(s) for +:
+    'c_int' and 'int'
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        A lot of other FFIs have the same detail with the .value, although not
+        always so verbose. The c-int type is often needed to be able to send
+        pointer-to, in order to read the FFIs output. Most FFIs handle
+        conversion from host-int to C-int by-value nicely.
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+flags = c_int()
+family = c_int()
+protocol = c_int()
+libc.getaddrinfop(
+    ctypes.byref(flags),
+    ctypes.byref(family),
+    ctypes.byref(protocol)
+)
+    \end{lstlisting}
+
+    \note{
+        \begin{itemize}
+            \item No need to make compatible struct
+            \item But if caller want struct, easy to make
+            \item Multiple vars are essentially structs (aggregate types)
+                  anyway, just unpacked. No worse in terms of signatures and
+                  ABI
+            \item Still awkward because FFIs tend to need special types to get
+                  data back. Int-by-value are transformed implicitly, but this
+                  does not apply to structs
+            \item Python always owns the variable, no lifetime issues
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{C}
+        \begin{lstlisting}
+blob* getdata(int offset, int size);
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{Python}
+        \begin{lstlisting}
+def load(graph_x, graph_y):
+    blob = libc.getdata(offset, size)
+    graph_x.add(blob)
+    graph_y.add(blob)
+        \end{lstlisting}
+    \end{block}
+
+Who are responsible for releasing?
+
+    \note{
+        \begin{itemize}
+            \item Cannot distinguish failures when pointer is returned
+            \item Must use something like errno
+            \item Can register blob as a type and build a hook in gc.run(), but
+                  is undeterministic
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Integers and gentlemen's agreements}
+        \begin{itemize}
+            \item Return values
+            \item Wide, naturally extensible
+            \item $2^{32}$ different values (usually)
+            \item Bools are evil, use int for conditionals
+        \end{itemize}
+    \end{block}
+
+    Enums are integral, but not necessarily int. Use int in signatures, but
+    named constants as enums are fine.
+
+    \note{
+        So why am I talking so much about ints?
+        \begin{itemize}
+            \item Integers are great, use them for everything
+            \item The int is the same fundamental type, and are quite powerful
+                  when paired with \emph{semantics} derived from context. If
+                  ints are received and passed along, host code can support new
+                  meanings without changing any code.
+                  % TODO: example? format
+            \item Int for return values are recommendation, will be discussed
+                  later
+            \item Bools are really ints, but cannot be extended. A lot of
+                  parameters start out binary, but later ends up getting more
+                  options
+            \item When later extending functionality, flags can be combined
+            \item Enums are defined to be integrals, not int, so using int in
+                  signatures ensures languages without enums ease-of-use and
+                  type width
+        \end{itemize}
+    }
+\end{frame}
+
+\section{No allocations}
+
+\begin{frame}
+    \begin{block}{Allocation introduce complexity}
+        \begin{itemize}
+            \item Lifetime and ownership issues
+            \item Memory leak or double-free opportunities
+            \item new/malloc incompatibilities
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Who owns an object?
+            \item Runtime and core may have different ownership models too, and
+                  this is difficult to follow
+            \item As we saw, when do you free? Need to hook custom destructors
+                  into garbage collectors, not deterministic
+            \item Forces caller to store C-compatible pointer, which is usually
+                  not ergonomic at all
+            \item When is it released? Can you copy? Re-init?
+            \item Harder to build alternative representations
+            \item If you're not allocating in Python, why write Python
+        \end{itemize}
+
+        [...] \emph{to not leak is to not allocate} [...] next frame
+    }
+\end{frame}
+
+\begin{frame}
+    \emph{The easiest way to not leak memory is to not allocate}
+
+    \note{
+        Is it all lost? What's our alternative
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Alternative: provide two functions}
+        \begin{algorithmic}
+            \State $n \gets$ \Call{ccall/query-size}{}
+            \State $buffer \gets$ \Call{alloc-bytes}{$n$}
+            \State \Call{ccall/get-data}{$buffer$}
+        \end{algorithmic}
+    \end{block}
+
+    \begin{block}{Benefits}
+        \begin{itemize}
+            \item Style enables paging
+            \item Can reuse buffers
+            \item Multiple writes in single buffer
+            \item Different alloction strategies
+            \item Memory registered (and garbage collected) and owned by
+                  runtime
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{block}{}
+            Can now support different alloc strategies - runtime can pool
+            allocations, use arenas, allocate inside other objects, handle
+            concurrency. This is effectively forbidden if the core enforces
+            allocation a certain way.
+        \end{block}
+
+        So what does this look like in practice?
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Python}
+        \begin{lstlisting}
+buffer = numpy.zeros(shape, dtype)
+return self.gettr(buffer, i, 1, 1)
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{Extension (C++)}
+        \begin{lstlisting}
+PyBuffer buffer;
+PyObject_GetBuffer(o, &buffer);
+segy_read_trace(i, buffer.data);
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        Examples of opportunities
+        \begin{itemize}
+            \item Alloc $shape \cdot n$, call gettr multiple times (makes matrix)
+            \item Can use different object, e.g. xarray, BLAS object
+            \item When making a generator, re-use same buffer
+            \item In general, the library author wants to control memory
+        \end{itemize}
+
+        Still suffers from the unpythonic calling style, but this is inside the
+        library so it's fine. Could've allocated inside the gettr too, but
+        wanted to control that from Python source
+    }
+\end{frame}
+
+\section{Calling core functions}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+int err = fun(...);
+if (err) return err;
+    \end{lstlisting}
+
+    \begin{lstlisting}
+int err = fun(...);
+switch (err) {
+    case OK: return OK;
+    case e1: handle_e1();
+    case e2: handle_e2();
+    ...
+    default:
+        /* always default case */
+        return err;
+    }
+    \end{lstlisting}
+
+    \note{
+        \begin{block}{}
+            If the runtime invokes the core library in either of these
+            fashions, new error codes can be added in the core lib, if more
+            edge cases or better descriptions come up later, without changing
+            runtime code.
+        \end{block}
+
+        \begin{block}{}
+            Of course, to make the runtime take advantage of this it must be
+            updated, but code won't suddenly misbehave too bad. Still, this is
+            a form of \emph{future proofing}.
+        \end{block}
+
+        \begin{block}{}
+            Arguably, return code is a part of the ABI, and that perspective is
+            fine.
+        \end{block}
+    }
+
+\end{frame}
+
+\begin{frame}[fragile]
+    Use int for return type, but choose them from an enum.
+    \begin{lstlisting}
+typedef enum {
+    SEGY_OK = 0,
+    SEGY_FREAD_ERROR,
+    SEGY_FWRITE_ERROR,
+    SEGY_INVALID_FIELD,
+    SEGY_INVALID_SORTING,
+    SEGY_MISSING_LINE_INDEX,
+    SEGY_INVALID_OFFSETS,
+    SEGY_TRACE_SIZE_MISMATCH,
+    SEGY_INVALID_ARGS,
+    SEGY_READONLY,
+    SEGY_NOTFOUND,
+} SEGY_ERROR;
+    \end{lstlisting}
+\end{frame}
+
+\section{Primitive functions}
+\note{
+    Now that we know how to call them, let's look at how to combine the
+    no-allocation primitive-type lessons
+}
+
+\begin{frame}
+    Identify a useful set of \textbf{atoms} that solve the \textbf{underlying
+    problem}
+
+    \note{
+        \begin{block}{}
+            This is really just good software design - functions should have a
+            single responsibility anyway.
+        \end{block}
+
+        \begin{block}{}
+            The one thing I've noticed that I'd like, even with our super low
+            level interface, is to have \emph{even} more details exposed. When
+            they don't work they can be augmented by more or slightly different
+            functions, or runtime-specific changes.
+        \end{block}
+
+        \begin{block}{}
+            Remember, \emph{your users want to write libraries}, hiding details
+            is likely harmful. If two functions can be combined to provide the
+            functionality, there's no reason to introduce a third
+        \end{block}
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Function design guidelines}
+        \begin{itemize}
+            \item All state through parameters, outside-in wiring
+            \item Heavy parametrized
+            \item Return int error code
+            \item Once assembled, the core should solve the problem
+            \item Resist the temptation of \emph{solving} it in Python
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item It makes it very clear what data is needed, allowing the
+                  consumer to initialise and prepare (cache, multi-phase
+                  initialise) accordingly
+            \item By parametrizing, feature selection can be done by storing
+                  variables, less need for dispatch tables
+            \item Also allows overriding at every step. Case study: take index
+                  as parameter, allows storing and reading from disk. Doing
+                  this implicitly good in short term, harmful in long term
+            \item Example: can't manipulate trace index from Python unless
+                  index is fully exposed, can't store as Python sees fit
+            \item Wiring is done from the outside, they have more
+                  \textbf{context}. Easy to report error on \emph{exactly} the
+                  step that failed
+            \item Because they're small in function and scope they're easy to
+                  test. Errors can be simulated by passing wrong parameters,
+                  and, setup can be omitted
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Example: State through parameters}
+        \begin{lstlisting}
+int segy_readsubtr(segy_file* fp,
+                   int traceno,
+                   int start,
+                   int stop,
+                   int step,
+                   void* buf,
+                   void* rangebuf,
+                   long trace0,
+                   int trace_bsize);
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        \begin{block}{}
+            This is one of the workhorse functions in segyio. If you squint,
+            the functionality is really reading a (possibly strided) column of
+            a very large matrix
+        \end{block}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Example: State through parameters}
+    \begin{lstlisting}
+int segy_readsubtr(segy_file* fp,
+                   int traceno,
+                   @int start,@
+                   @int stop,@
+                   @int step,@
+                   void* buf,
+                   void* rangebuf,
+                   long trace0,
+                   int trace_bsize);
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        \begin{block}{}
+            These parameters provide the strided read. Reading a full column is
+            just a special case of this.
+        \end{block}
+
+        \begin{block}{}
+            Now callers can dispatch both strided reads and full columns
+            through parameters, rather than having to dispatch to different
+            functions
+        \end{block}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Example: State through parameters}
+        \begin{lstlisting}
+int segy_readsubtr(segy_file* fp,
+                   int traceno,
+                   int start,
+                   int stop,
+                   int step,
+                   void* buf,
+                   void* rangebuf,
+                   @long trace0,@
+                   @int trace_bsize@);
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        These parameters would often be inside the fp handle. They mark the
+        column size (in bytes), and the start of the data. This has proven very
+        useful to keep passing manually, even though they're \emph{usually} the
+        same values all the time. They're provided by the \emph{library
+        itself}, Python never even inspects them
+
+        \begin{itemize}
+            \item It powers reading-from-offsets, essentially parallel
+                  matrices (or the next dimension)
+            \item If set in fp, to move start-of-file, you must first push the
+                  new start, do the read, and pop it for one-offs
+            \item Callers can re-interpret traces, allowed easy extension to
+                  2/3/8-byte formats. Virtually no code changed in Python
+            \item Different behaviours could easily be simulated
+        \end{itemize}
+
+        Let's look at an alternative
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+int segy_to_native(int format,
+                   long long size,
+                   void* buf);
+    \end{lstlisting}
+    \note{
+        \begin{itemize}
+            \item ibm float, ieee 4+8 byte
+            \item signed integer 1-2-3-4-8 byte
+            \item unsigned integer 1-2-3-4-8 byte
+            \item \texttt{format} encodes little/big endian
+        \end{itemize}
+
+        Now, if this was without the format parameter
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+int segy_from_ieee4be(int size, float* buf);
+int segy_from_ieee8be(int size, double* buf);
+int segy_from_ibm4be(int size, float* buf);
+int segy_from_int4be(int size, float* buf);
+
+int segy_from_ieee4le(int size, float* buf);
+int segy_from_ieee8le(int size, double* buf);
+int segy_from_ibm4le(int size, float* buf);
+int segy_from_int4le(int size, float* buf);
+    \end{lstlisting}
+
+    \note{
+        And similarly for native-to-file. Now the same information is encoded
+        in the function name, but forces host language to implement the mapping
+        logic, instead of storing an int it gets from somewhere else.
+    }
+\end{frame}
+
+\begin{frame}
+    Separate I/O from all other logic
+
+    \note{
+        \begin{itemize}
+            \item This is one of those ancient programming advices that still is
+                  easy to mess up.
+            \item segyio is an I/O library. What's the gain in not providing
+                  I/O?  How well can I/O be separated?
+            \item Virtually all segyio functions operate on an opaque file
+                  handle, which I think was a mistake
+            \item What is "I/O" really?
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+int segy_to_native(int format,
+                   long long size,
+                   void* buf);
+    \end{lstlisting}
+
+    \begin{itemize}
+        \item This is I/O (memory transaction)
+        \item Disconnected from file reading
+        \item Interface supports arbitrary element sizes
+        \item Can translate partial buffers
+        \item Source of data does not have to be SEG-Y
+    \end{itemize}
+
+    \note{
+        \begin{block}{}
+            Maybe single best design decision of segyio, can encode/decode in
+            batch, read raw data etc. Anecdotally, new numeric format support
+            was added without any change in Python, silently accepted more
+            files.
+        \end{block}
+
+        \begin{block}{}
+            Enables good \emph{integration}. Very much applies to file I/O,
+            e.g. read directly from cloud, mmap, unix pipes etc. segyio today
+            uses an opaque file handle, which prohibits files in the cloud
+        \end{block}
+    }
+\end{frame}
+
+\begin{frame}
+    \vfill
+    \centering
+    \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+        \usebeamerfont{title}Thank you!
+    \end{beamercolorbox}
+    \vfill
+\end{frame}
+
+\begin{frame}
+    \vfill
+    \centering
+    \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+        \usebeamerfont{title}Questions?
+    \end{beamercolorbox}
+    \vfill
+\end{frame}
+
+\end{document}
