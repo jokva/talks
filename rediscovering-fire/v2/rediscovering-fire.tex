@@ -2,6 +2,7 @@
 
 \RequirePackage[utf8]{inputenc}
 \RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
 
 % for speaker notes etc
 \RequirePackage{pgfpages}
@@ -11,12 +12,24 @@
 \setbeamercovered{invisible}
 \setbeamercovered{again covered={\opaqueness<1->{15}}}
 
+\AtBeginSection[]{
+    \begin{frame}
+        \vfill
+        \centering
+        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+            \usebeamerfont{title}\insertsectionhead\par%
+        \end{beamercolorbox}
+        \vfill
+    \end{frame}
+}
+
 \RequirePackage{listings}
 
 \mode<presentation>{}
 
 \title{Rediscovering fire}
 \author{Jørgen Kvalsvik}
+
 
 \begin{document}
 \maketitle
@@ -40,13 +53,16 @@
 
 \section{API + ABI}
 
-\begin{frame}{Quick reference - API}
-    \begin{itemize}[<+>]
-        \item Application Programming Interface
-        \item Function signatures and types
-        \item Source compatibility
-        \item Compile-time property
-    \end{itemize}
+\begin{frame}
+    \begin{block}{API}
+        \pause
+        \begin{itemize}[<+>]
+            \item Application Programming Interface
+            \item Function signatures and types
+            \item Source compatibility
+            \item Compile-time property
+        \end{itemize}
+    \end{block}
 
     \note{
     \begin{itemize}
@@ -57,12 +73,16 @@
     }
 \end{frame}
 
-\begin{frame}{Quick reference - ABI}
-    \begin{itemize}[<+>]
-        \item Application Binary Interface
-        \item Data type, size, alignment
-        \item Run-time property
-    \end{itemize}
+\begin{frame}
+
+        \begin{block}{ABI}
+        \pause
+        \begin{itemize}[<+>]
+            \item Application Binary Interface
+            \item Data type, size, alignment
+            \item Run-time property
+        \end{itemize}
+    \end{block}
 
     \note{
     \begin{itemize}
@@ -73,18 +93,262 @@
     }
 \end{frame}
 
-\begin{frame}{Maintaining API+ABI}
-    \begin{itemize}[<+>]
-        \item Never remove functions
-        \item Never change arguments
-        \item Never change structs
-        \item Adding is fine
-    \end{itemize}
+\begin{frame}
+    \begin{block}{Rules for ABI+ABI stability}
+    \pause
+        \begin{itemize}[<+>]
+            \item Never remove functions
+            \item Never change arguments
+            \item Never change structs
+            \item Adding is fine
+        \end{itemize}
+    \end{block}
 
     \note{
         These are good guidelines, but not a complete rule set. With the three
         nevers, the API+ABI should remain stable
     }
+\end{frame}
+
+\section{Primitive types}
+\begin{frame}
+    \begin{block}{Primitive types}
+        \begin{itemize}
+            \item int, float, pointer etc
+            \item Avoid structs
+        \end{itemize}
+    \end{block}
+
+    \note{
+        Structs in the API are nice for C, but puts many requirements on
+        callers.
+
+        Let's look at \textbf{why}.
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{C}<+>
+        \begin{lstlisting}
+struct addrinfo {
+    int flags;
+    int family;
+    int protocol;
+};
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{python/ctypes}<+>
+        \begin{lstlisting}
+import ctypes
+class Addrinfo(ctypes.Structure):
+    _fields_ = [
+        ("flags",    ctypes.c_int),
+        ("family",   ctypes.c_int),
+        ("protocol", ctypes.c_int),
+    ]
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Simplified addrinfo from C
+            \item Output of getaddrinfo function
+            \item Python struct is pretty awkward
+            \item But could be hidden in lib so that's ok
+        \end{itemize}
+
+        Let's see it in action
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+addrinfo = Addrinfo()
+libc.getaddrinfo(ctypes.byref(addrinfo))
+    \end{lstlisting}
+
+    \note{
+        This is not so bad, but:
+        \begin{itemize}
+            \item Forces us to make compatible structs
+            \item The members are ctypes
+            \item We want \emph{native} Python, can't keep using cint
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{}
+    \begin{block}{}<+>
+        \begin{lstlisting}
+>>> import ctypes
+>>> ctypes.c_int(10) + 5
+Traceback (most recent call last):
+File "<stdin>", line 1, in <module>
+TypeError: unsupported operand type(s) for +:
+    'c_int' and 'int'
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{}<+>
+        \begin{lstlisting}
+>>> ctypes.c_int(10).value
+10
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+flags = c_int()
+family = c_int()
+protocol = c_int()
+libc.getaddrinfop(
+    ctypes.byref(flags),
+    ctypes.byref(family),
+    ctypes.byref(protocol)
+)
+    \end{lstlisting}
+
+    \note{
+        \begin{itemize}
+            \item No need to make compatible struct
+            \item But if caller want struct, easy to make
+            \item Multiple vars are essentially structs (aggregate types)
+                  anyway, if ABI to be maintained
+            \item In some languages, cint isn't special, and can write directly
+            \item Python always owns the variable, no lifetime issues
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Integers and gentlemen's agreements}
+        \pause
+        \begin{itemize}[<+>]
+            \item Return values
+            \item Wide, naturally extensible
+            \item $2^{32}$ different values (usually)
+            \item Use for optionals, bools are evil
+        \end{itemize}
+    \end{block}
+
+    \pause
+    Named int constants can go in headers as enum,
+    Provide int constants in headers as enum, use int in signatures
+
+    \note{
+        \begin{itemize}
+            \item Integers are great, use them for this
+            \item Return values are recommendation, will be discussed later
+            \item Bools are really ints, but cannot be extended
+            \item When later extending functionality, flags can be combined
+        \end{itemize}
+    }
+\end{frame}
+
+\section{Allocation}
+
+\begin{frame}
+    \begin{block}{Allocation introduce complexity}
+        \pause
+        \begin{itemize}[<+>]
+            \item Lifetime issues
+            \item malloc/free mismatch
+            \item new/malloc mismatch
+        \end{itemize}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Who owns an object?
+            \item When is it released? Can you copy? Re-init?
+            \item Units can't just receive objects, must know origin
+            \item If you're allocating in C, why not write C
+        \end{itemize}
+
+        [...] \emph{to not leak is to not allocate} [...] next frame
+    }
+\end{frame}
+
+\begin{frame}
+    \emph{The easiest way to not leak memory is to not allocate}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Alternative: two functions}<+->
+        \begin{enumerate}[<+->]
+            \item Query size
+            \item Let caller allocate
+            \item Write into callers buffer
+        \end{enumerate}
+    \end{block}
+
+    \begin{block}{Benefits}<+->
+        \begin{itemize}[<+>]
+            \item Style enables paging
+            \item Can reuse buffers
+            \item Multiple writes in single buffer
+            \item Different alloc strategies
+            \item Runtime owns memory, not core
+        \end{itemize}
+    \end{block}
+
+    \note{
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Python}<+>
+        \begin{lstlisting}
+buffer = numpy.zeros(shape, dtype)
+return self.gettr(buffer, i, 1, 1)
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{Extension (C++)}<+>
+        \begin{lstlisting}
+PyBuffer buffer;
+PyObject_GetBuffer(o, &buffer);
+segy_read_trace(i, buffer.data);
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        Examples of opportunities
+        \begin{itemize}
+            \item Alloc shape * n, call gettr multiple times (makes matrix)
+            \item Can use different object, e.g. xarray, BLAS object
+            \item When making a generator, re-use same buffer
+            \item In general, the library author wants to control memory
+        \end{itemize}
+    }
+\end{frame}
+
+\section{Style}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}
+        int err = fun(...);
+        if (err) return err;
+    \end{lstlisting}
+
+    \begin{lstlisting}
+        int err = fun(...);
+        switch (err) {
+            case OK: return OK;
+            case e1: handle_e1();
+            case e2: handle_e2();
+            ...
+            default:
+                /* always default case */
+                return err;
+        }
+    \end{lstlisting}
+
 \end{frame}
 
 \section{Single purpose functions}
@@ -95,6 +359,8 @@
             int solve(args...)
         \end{lstlisting}
     \end{block}
+
+    EXPOSE YOUR STEPS
 
     \note{
         It's tempting to make functions like int solve(args...)
@@ -111,14 +377,14 @@
         Callers can write solve
 
         Step2 can be replaced when there's a bug, step1..3 can be re-purposed
-        TODO: Freedom to cache, MRU, store differently, pause, continuations
         TODO: highly parametrised
         TODO: individually report error, get context from function itself
         TODO: less strict on input, step2 can be substitued
+        TODO: don't know the host languages assumptions and opinions
     }
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
     \begin{block}{}<+>
         \begin{lstlisting}
             step1(...)
@@ -127,18 +393,10 @@
         \end{lstlisting}
     \end{block}
 
-    \note{
-    }
+    \note{}
 \end{frame}
 
 \begin{frame}
-\end{frame}
-
-\section{Primitive types}
-\begin{frame}
-    \begin{itemize}
-        \item int, float, pointers
-    \end{itemize}
 \end{frame}
 
 \end{document}
