@@ -1,0 +1,144 @@
+\documentclass[pdf]{beamer}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+
+% for speaker notes etc
+\RequirePackage{pgfpages}
+% remove this line to only get slides
+\setbeameroption{show notes on second screen}
+
+\setbeamercovered{invisible}
+\setbeamercovered{again covered={\opaqueness<1->{15}}}
+
+\RequirePackage{listings}
+
+\mode<presentation>{}
+
+\title{Rediscovering fire}
+\author{Jørgen Kvalsvik}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\section{Why}
+
+\begin{frame}{Goal}
+    % Drawing of single-core multi-front
+    \begin{block}{The goal}
+        A single, fast core that can be shared by multiple language fronts,
+        with clean upgrade paths. A library for building \emph{libraries}.
+    \end{block}
+    \note{
+        Differs from direct language bindings
+    }
+\end{frame}
+
+\section{API + ABI}
+
+\begin{frame}{Quick reference - API}
+    \begin{itemize}[<+>]
+        \item Application Programming Interface
+        \item Function signatures and types
+        \item Source compatibility
+        \item Compile-time property
+    \end{itemize}
+
+    \note{
+    \begin{itemize}
+        \item Programs that worked with the old version, work with
+              recompilation with the new version
+        \item Some changes maintain API compatibility, e.g. int $\rightarrow$ long
+    \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Quick reference - ABI}
+    \begin{itemize}[<+>]
+        \item Application Binary Interface
+        \item Data type, size, alignment
+        \item Run-time property
+    \end{itemize}
+
+    \note{
+    \begin{itemize}
+        \item Programs compiled against the old version also work, without
+              recompilation, with the new version
+        \item Compatibility is usually only considered inside same toolchain
+    \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Maintaining API+ABI}
+    \begin{itemize}[<+>]
+        \item Never remove functions
+        \item Never change arguments
+        \item Never change structs
+        \item Adding is fine
+    \end{itemize}
+
+    \note{
+        These are good guidelines, but not a complete rule set. With the three
+        nevers, the API+ABI should remain stable
+    }
+\end{frame}
+
+\section{Single purpose functions}
+
+\begin{frame}[fragile]
+    \begin{block}{}<+>
+        \begin{lstlisting}
+            int solve(args...)
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+        It's tempting to make functions like int solve(args...)
+
+        \begin{itemize}
+            \item As end user, it is all you care about
+            \item As library writer you want something more
+        \end{itemize}
+
+        This is really just good software design - functions should have a
+        single responsibility anyway. Yet extra care must be applied because
+        things added to API are permanent.
+
+        Callers can write solve
+
+        Step2 can be replaced when there's a bug, step1..3 can be re-purposed
+        TODO: Freedom to cache, MRU, store differently, pause, continuations
+        TODO: highly parametrised
+        TODO: individually report error, get context from function itself
+        TODO: less strict on input, step2 can be substitued
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{}<+>
+        \begin{lstlisting}
+            step1(...)
+            step2(...)
+            step3(...)
+        \end{lstlisting}
+    \end{block}
+
+    \note{
+    }
+\end{frame}
+
+\begin{frame}
+\end{frame}
+
+\section{Primitive types}
+\begin{frame}
+    \begin{itemize}
+        \item int, float, pointers
+    \end{itemize}
+\end{frame}
+
+\end{document}
