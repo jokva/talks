@@ -1,0 +1,257 @@
+\documentclass[pdf]{beamer}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
+
+% for speaker notes etc
+\RequirePackage{pgfpages}
+\setbeameroption{show notes on second screen}
+%\setbeameroption{show only notes}
+\setbeamercolor{note page}{bg=white}
+\setbeamercolor{note title}{bg=white!90!black, fg=black}
+\setbeamercolor{note date}{parent=note title}
+
+\beamertemplatenavigationsymbolsempty
+\AtBeginSection[]{
+    \begin{frame}
+        \vfill
+        \centering
+        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+            \usebeamerfont{title}\insertsectionhead\par%
+        \end{beamercolorbox}
+        \vfill
+    \end{frame}
+}
+
+\RequirePackage{listings}
+\lstset{escapeinside={<@}{@>}}
+\lstset{basicstyle=\ttfamily}
+\lstset{moredelim=**[is][\color{red}]{@}{@}}
+
+\RequirePackage{algpseudocode}
+
+\mode<presentation>{}
+
+\title{Building C++-Python libraries}
+\subtitle{}
+\author{Jørgen Kvalsvik <jokva@equinor.com>}
+\titlegraphic{\includegraphics[width=0.33\textwidth]{equinor-red.eps}}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Outline}
+    \tableofcontents
+
+    \note{
+        \begin{itemize}
+            \item something python api for users
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Types of Python}
+    \begin{itemize}
+        \item Pure python
+        \item Impure Python (non-python code behind CPython API)
+        \item Thin library wrappers
+        \item Fat library wrappers
+    \end{itemize}
+
+    \note{
+        \begin{itemize}
+            \item Pure python is what we want out downstream users to do
+            \item Impure python is almost indistinguishable from pure python.
+                  Numpy and chunks of the python standard library are good
+                  examples.
+            \item Thin wrappers rely on some system provided library and
+                  provide an entry point from Python. Ctypes is often use for
+                  this - fire, wait, and parse result
+            \item Rely on larger, often system-wide external libraries, but do
+                  more than just provide an entry point - sophisticated I/O,
+                  manipulation of state, and rich access to library
+                  functionality. Difference between this and impure python is
+                  that numpy's backend is only available in Python, contrary to
+                  say python-BLAS
+
+        \end{itemize}
+        We'll focus on impure and fat library.
+    }
+\end{frame}
+
+\begin{frame}{Some goals}
+    python3 -m pip install pkg
+\end{frame}
+
+\begin{frame}{pip install}
+    What does pip install do?
+    \note{
+    }
+\end{frame}
+
+
+\begin{frame}{\emph{Building} interpreted packages 1/2}
+    Python packages are just source code, parsed and interpreted on-the-fly
+
+    \note{
+        \begin{itemize}
+            \item We still talk about \emph{building} packages even though it's
+                  a glorified directory copy
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Directory layout 1/2}
+    \begin{verbatim}
+README.rst
+LICENSE
+setup.py
+requirements.txt
+package/__init__.py
+package/core.py
+package/helpers.py
+docs/conf.py
+docs/index.rst
+tests/test_basic.py
+tests/test_advanced.py
+    \end{verbatim}
+
+{\tiny Source: }
+
+{\tiny https://www.kennethreitz.org/essays/repository-structure-and-python}
+
+{\tiny https://docs.python-guide.org/writing/structure}
+    \note{
+        \begin{itemize}
+            \item Building this package is essentially just copying the
+                  package/ directory to the correct python/site-packages
+            \item Sometimes you want to do some pre-processing to source files,
+                  pre-set variables depending on system etc
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Directory layout 2/2}
+    \begin{verbatim}
+README.rst
+LICENSE
+setup.py
+requirements.txt
+src/package/__init__.py
+src/package/core.py
+src/package/helpers.py
+docs/conf.py
+docs/index.rst
+tests/test_basic.py
+tests/test_advanced.py
+    \end{verbatim}
+
+    \note{
+        \begin{itemize}
+            \item Notice the src/ folder
+            \item Can have multiple packages in the same tree
+            \item Has a few benefits, no implicit import of source code
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{\emph{Building} interpreted packages 2/2}
+    Building is the transformation from a source-tree to something predictably
+    laid out in site-packages
+
+    \note{
+        \begin{itemize}
+            \item For this, \emph{if} you conform to a common project layout,
+                  python tooling works reasonably well.
+            \item How did we get here?
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Some history}
+    \begin{description}
+        \item [Late 90s] Python wanted something like CPAN
+        \item [2000] Distutils released for Python 1.6 standard library, where
+                     modules go to die
+        \item [2003] PyPI is online, distutils can create package metadata
+        \item [2008] Setuptools replaces distutils, pip builds on it
+    \end{description}
+
+    \note{
+        \begin{itemize}
+            \item Distutils came with infrastructure for building C code
+            \item Feels much intended for building Python extensions, by having
+                  the same compiler that built Python.
+            \item This is still common on unix-like systems, terrible on
+                  Windows where dealing with compilers is a pain.
+            \item Uses homegrown compiler abstraction and option dispatch
+                  interface. Little robust auto discovery, half-way to cmake
+            \item Honestly, setup.py-files that do more than setup() tend to be
+                  low-effort, buggy, "works on my machine" solutions. Robust
+                  files get complicated \emph{fast}.
+            \item Pollutes source tree
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Building native code}
+    The struggle of binary libraries
+
+    \begin{itemize}
+        \item Multiple compilers with different flags
+        \item Compiler versions
+        \item Multiple available compilers
+        \item Platform-specific options
+        \item Configuration-specific options, e.g. \verb|USE_BLAS|
+        \item Feature detection
+        \item Build and runtime dependencies
+        \item Binary compatibility
+    \end{itemize}
+
+    \note{
+        Read list
+
+        \begin{itemize}
+            \item The experience compiling and developing native extensions is
+                  terrible
+            \item Setuptools has virtually nothing to help you here, boils down
+                  to manually implementing half of cmake
+            \item The development story is quite bad too
+            \item People end up hard-coding links top /opt/local/lib64, I can't
+                  blame them
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Developing native code}
+    \begin{itemize}
+        \item Changes in headers aren't detected, and the module isn't
+              recompiled. Not great when you have templates
+        \item Not designed for interactive development, desgined for
+              distribution
+        \item Setuptools assumes it controls the world, so it pollutes build
+              trees. Not cool when python support is a sub project
+    \end{itemize}
+
+    \note{
+        \begin{itemize}
+            \item Not designing for live development of C based modules is
+                  fine, they weren't aiming to build a C build system. But most
+                  time is spent is development (by me), and having parallel
+                  development and build systems suck
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    Is all hope lost?
+
+    \note{
+        \begin{itemize}
+            \item The talk name did hint of a solution
+        \end{itemize}
+    }
+\end{frame}
+
+\end{document}
