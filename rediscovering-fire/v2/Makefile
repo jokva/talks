@@ -13,4 +13,4 @@ clean:
 	rm -f equinor-red-eps-converted-to.pdf
 
 deps:
-	apt-get install latexmk texlive-latex-extra
+	apt-get install latexmk texlive-latex-extra texlive-science texlive-font-utils
