@@ -1,0 +1,36 @@
+# machine definition
+os: linux
+language: python
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+  - 3.7
+
+# scripts
+install:
+    - pip install -r python/requirements-dev.txt
+    - pip install bandit # run static analysis
+    - bandit -c bandit.yml -r python/
+
+script:
+    - cmake -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_BUILD_TYPE=Release
+            ..
+    - make
+    - ctest --output-on-failure
+    - build_wheel python
+
+before_install:
+    - git clone https://github.com/matthew-brett/multibuild
+    - source multibuild/common_utils.sh
+    - source multibuild/travis_steps.sh
+    - before_install # set up environment
+
+deploy:
+    - provider: pypi
+      user: mechazawa
+      password:
+        secure: encrypted-key
+      on:
+        tags: true
