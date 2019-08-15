@@ -220,6 +220,8 @@ tests/test_advanced.py
             \item The development story is quite bad too
             \item People end up hard-coding links top /opt/local/lib64, I can't
                   blame them
+            \item Since setup.py implements build, install, test commands,
+                  custom option commands are difficult or clumsy
         \end{itemize}
     }
 \end{frame}
@@ -227,7 +229,7 @@ tests/test_advanced.py
 \begin{frame}{Developing native code}
     \begin{itemize}
         \item Changes in headers aren't detected, and the module isn't
-              recompiled. Not great when you have templates
+              recompiled - not great when you have templates
         \item Not designed for interactive development, desgined for
               distribution
         \item Setuptools assumes it controls the world, so it pollutes build
@@ -236,6 +238,8 @@ tests/test_advanced.py
 
     \note{
         \begin{itemize}
+            \item Overall, setuptools does a poor job of tracking file ->
+                  compiled object dependencies
             \item Not designing for live development of C based modules is
                   fine, they weren't aiming to build a C build system. But most
                   time is spent is development (by me), and having parallel
@@ -250,6 +254,279 @@ tests/test_advanced.py
     \note{
         \begin{itemize}
             \item The talk name did hint of a solution
+            \item A lot of installed stuff is happy to hard-code path to python
+                exe + libs
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Enter scikit-build}
+    scikit-build
+
+    The scikit-build package is fundamentally just glue between the setuptools
+    Python module and CMake
+
+    - Scikit-build readme
+
+    \note{
+        \begin{itemize}
+            \item In short, it automates building C++ with cmake, and automates
+                  dealing with python flags, layout, options.
+            \item For us, it did replace some homegrown attempts at the same
+                  thing
+            \item Setuptools does what setuptools can (build python), cmake
+                  does what cmake does
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{CMake}
+    cmake gives us:
+    \begin{itemize}
+        \item \verb|find_package|
+        \item \verb|target_link_libraries|
+        \item \verb|set(CMAKE_CXX_STANDARD)|
+        \item \verb|if (MSVC)|
+    \end{itemize}
+
+    \note{
+        \begin{itemize}
+            \item Hate it or love it, cmake is good at tracking file
+                  dependencies, minimal builds etc
+            \item It's reasonably easy to set options, deal with compiler
+                  differences in cmake. When you have third-party dependencies
+                  that provide cmake-config or similar, you can easily get them
+                  from inside the python extension with find-package
+            \item cmake is pretty good at dealing with platform differences
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Intermission: automate everything}
+
+    \verb|make -j8 && ctest --output-on-failure|
+
+    \note{
+        \begin{itemize}
+            \item This command is really what I mostly do during development
+            \item From a clean checkout, running cmake and then this is
+                  sufficient
+            \item It builds the core libraries, some applications, the python
+                  extension, the python library, and docs if enabled
+            \item And runs the tests, across all languages
+            \item It uses setup.py to run the python build system, python
+                  doesn't really know that it's not the main driver
+            \item Assuming Python is the only player
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setup.py}
+    \verb|python3 setup.py build|
+
+    \verb|python3 setup.py test|
+
+    \note{
+        \begin{itemize}
+            \item This is what we want to run
+            \item Let's look at the code needed to drive this
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setup.py}
+\begin{verbatim}
+import skbuild
+skbuild.setup(
+    name = 'pkg',
+    packages = [
+        'pkg',
+        'pkg.module',
+    ],
+    install_requires = [
+        'numpy',
+    ],
+    cmake_args = [
+    ],
+)
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]{CMakeLists.txt}
+\begin{verbatim}
+cmake_minimum_required(VERSION 3.5.0)
+project(extension LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 11)
+
+find_package(PythonExtensions REQUIRED)
+find_package(package REQUIRED)
+
+add_library(core MODULE src/core.cpp)
+python_extension_module(core)
+target_link_libraries(core package::lib)
+if (MSVC)
+    target_compile_options(core PRIVATE /EHsc)
+endif ()
+
+install(TARGETS core LIBRARY DESTINATION package)
+\end{verbatim}
+
+    \note{
+        \begin{itemize}
+            \item This is really it. It works quite well, and the maintainers
+                  are helpful
+            \item It's still not perfect, obviously, but it is a huge leap
+                  forward from setuptools and setuptools "abstractions"
+            \item Building redistributable packages, wheels, has not been
+                  discussed yet, but we'll get to that later
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Integration with cmake}
+
+\begin{verbatim}
+add_custom_target(
+    dlisio-python ALL
+    SOURCES ${setup.py} DEPENDS ${setup.py}
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${python} ${setup.py}
+        build_ext --inplace
+        build # setup.py build args
+            --cmake-executable ${CMAKE_COMMAND}
+            --generator ${CMAKE_GENERATOR}
+            ${DLISIO_PYTHON_BUILD_TYPE}
+        -- # scikit-build cmake args
+            -Ddlisio_DIR=${DLISIO_LIB_BINARY_DIR}
+            # "install" to the python/dlisio dir with rpath, so there's no need
+            # to fiddle with environment in ctest to load the core library from
+            # the build tree
+            -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
+            -DCMAKE_INSTALL_RPATH=$<TARGET_FILE_DIR:dlisio>
+            -DCMAKE_INSTALL_NAME_DIR=$<TARGET_FILE_DIR:dlisio>
+)
+add_dependencies(dlisio-python dlisio)
+\end{verbatim}
+
+\note{
+    \begin{itemize}
+        \item This is taken from dlisio
+        \item If you're not familiar with cmake or custom targets, this might
+              be confusing, but it makes so the python lib behaves like any
+              other C++ lib from cmake's perspective
+        \item Build in-place so that tests can be run directly on the source
+              tree. Setuptools pollutes this directory anyway, so we're not
+              really that much worse off.
+        \item Scikit-build builds for different python versions in different
+              dirs, so they coexist ok
+        \item Python's own build system tracks dependencies - the drawback is
+              even though there's nothing to do we still must run the seutp.py
+              file. This is somewhat slow, but an acceptable tradeoff
+    \end{itemize}
+}
+\end{frame}
+
+\begin{frame}[fragile]{Building wheels}
+    The python packaging format is the \emph{wheel}
+
+    \begin{itemize}
+        \item setup.py can build with \verb|setup.py bdist_wheel|
+        \item Relies on naming to distinguish package flavours
+        \item Can both be pure python or include binary components
+        \item pip resolves these names from the host system
+    \end{itemize}
+
+From PyPI:
+    \begin{verbatim}
+segyio-1.8.6-cp37-cp37m-manylinux1_x86_64.whl (87.5 kB)
+segyio-1.8.6-cp37-cp37m-win32.whl (83.4 kB)
+segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
+    \end{verbatim}
+
+    \note{
+        \begin{itemize}
+            \item Read list on screen
+            \item OS X was omitted because it's quite long, but follows the
+                  same
+            \item The manylinux image is specified by the PyPA, basically the
+                  oldest libc + supporting libs they could use (RHEL5)
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}
+    Problem: I have no machine running Windows
+\end{frame}
+
+\begin{frame}
+    Problem: I have no machine running Red Hat 5
+
+    \note{
+        We'll solve these problems in a bit
+    }
+\end{frame}
+
+\begin{frame}{Build automation}
+    \note{
+        \begin{itemize}
+            \item Ok, so now we can reasonably easy build and develop on the
+                  developer machine
+            \item That's still not enough - want to test multiple versions,
+                  compilers, operating systems
+            \item Most of our projects \emph{are} in fact used across multiple
+                  systems, but even if that wasn't the case I'd still insist on
+                  it
+            \item Targeting different systems improves robustness and
+                  correctness - if platforms differ it's because of latent bugs
+            \item Also helps the contributor experience - contributors don't
+                  have to set up massive rigs, and are generally terrible at
+                  running and writing tests
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Build automation}
+    Lesson:
+
+    Things not automated will not be done
+    \note{
+        \begin{itemize}
+            \item ?
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Build automation}
+    % logos: travis appveyor circle
+    \note{
+        \begin{itemize}
+            \item These are what we use currently, but like with code there's
+                  always maintenance, considering other providers etc.
+            \item We use them to test on all platforms, multiple versions
+            \item Run on every pull request before merge, and all HEADs on
+                  master
+            \item We also use it for building and releasing packages
+            \item So what does it look like?
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Build automation}
+    % Workflow pictorial
+\end{frame}
+
+\begin{frame}[fragile]{Intermezzo: building wheel on Debian 10 (Buster)}
+    \verb|segyio-1.8.6-cp37-cp37m-linux_x86_64.whl|
+    \note{
+        \begin{itemize}
+            \item Notice it says linux, not manylinux. Pip will not fetch
+                  packages with this tag, but you can install it at your own
+                  machine
+            \item CI is scripts + machine definition + triggers
+            \item Perfect usecase for obsolete systems like RHEL5 and Windows
+            \item Which happens to be what we need to build wheels pip can use
         \end{itemize}
     }
 \end{frame}
