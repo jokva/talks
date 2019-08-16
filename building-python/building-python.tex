@@ -29,7 +29,13 @@
 \lstset{basicstyle=\ttfamily}
 \lstset{moredelim=**[is][\color{red}]{@}{@}}
 
-\RequirePackage{algpseudocode}
+\RequirePackage{dirtree}
+\RequirePackage{underscore}
+\RequirePackage{csquotes}
+
+\RequirePackage{listings}
+% use monospaced fonts in listings
+\lstset{basicstyle=\ttfamily}
 
 \mode<presentation>{}
 
@@ -62,17 +68,17 @@
     \note{
         \begin{itemize}
             \item Pure python is what we want out downstream users to do
-            \item Impure python is almost indistinguishable from pure python.
+            \item Impure python is almost indistinguishable from pure python:
                   Numpy and chunks of the python standard library are good
                   examples.
             \item Thin wrappers rely on some system provided library and
                   provide an entry point from Python. Ctypes is often use for
-                  this - fire, wait, and parse result
+                  this - fire, wait, and parse the output
             \item Rely on larger, often system-wide external libraries, but do
                   more than just provide an entry point - sophisticated I/O,
                   manipulation of state, and rich access to library
                   functionality. Difference between this and impure python is
-                  that numpy's backend is only available in Python, contrary to
+                  that numpy's backend is only available in python, contrary to
                   say python-BLAS
 
         \end{itemize}
@@ -86,10 +92,14 @@
 
 \begin{frame}{pip install}
     What does pip install do?
-    \note{
-    }
-\end{frame}
 
+    \begin{enumerate}
+        \item Looks up the package name in an \emph{index}
+        \item Determines if the package is installable on this system
+        \item Fetches the package
+        \item Extracts the contents to the right site-package directory
+    \end{enumerate}
+\end{frame}
 
 \begin{frame}{\emph{Building} interpreted packages 1/2}
     Python packages are just source code, parsed and interpreted on-the-fly
@@ -98,60 +108,88 @@
         \begin{itemize}
             \item We still talk about \emph{building} packages even though it's
                   a glorified directory copy
+            \item To shed some light on it, let's look at the internals of your
+                  run-of-the-mill python project
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{Directory layout 1/2}
-    \begin{verbatim}
-README.rst
-LICENSE
-setup.py
-requirements.txt
-package/__init__.py
-package/core.py
-package/helpers.py
-docs/conf.py
-docs/index.rst
-tests/test_basic.py
-tests/test_advanced.py
-    \end{verbatim}
+\begin{frame}{Directory layout 1/3}
+    \dirtree{%
+        .1 project/.
+        .2 README.rst.
+        .2 LICENSE.
+        .2 setup.py.
+        .2 requirements.txt.
+        .2 package/.
+        .3 __init__.py.
+        .3 core.py.
+        .3 helpers.py.
+        .2 docs/.
+        .3 conf.py.
+        .3 index.rst.
+        .2 tests/.
+        .3 test_basic.py.
+        .3 test_advanced.py.
+    }
 
-{\tiny Source: }
+    {\tiny https://www.kennethreitz.org/essays/repository-structure-and-python}
 
-{\tiny https://www.kennethreitz.org/essays/repository-structure-and-python}
-
-{\tiny https://docs.python-guide.org/writing/structure}
+    {\tiny https://docs.python-guide.org/writing/structure}
     \note{
         \begin{itemize}
+            \item This is a source tree listing, a git checkout or similar
             \item Building this package is essentially just copying the
                   package/ directory to the correct python/site-packages
             \item Sometimes you want to do some pre-processing to source files,
-                  pre-set variables depending on system etc
+                  pre-set variables depending on system, bundle data files etc
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{Directory layout 2/2}
-    \begin{verbatim}
-README.rst
-LICENSE
-setup.py
-requirements.txt
-src/package/__init__.py
-src/package/core.py
-src/package/helpers.py
-docs/conf.py
-docs/index.rst
-tests/test_basic.py
-tests/test_advanced.py
-    \end{verbatim}
+\begin{frame}{Directory layout 2/3}
+    \dirtree{%
+        .1 project/.
+        .2 README.rst.
+        .2 LICENSE.
+        .2 setup.py.
+        .2 requirements.txt.
+        .2 src/.
+        .3 package/.
+        .4 __init__.py.
+        .4 core.py.
+        .4 helpers.py.
+        .2 docs/.
+        .3 conf.py.
+        .3 index.rst.
+        .2 tests/.
+        .3 test_basic.py.
+        .3 test_advanced.py.
+    }
 
     \note{
         \begin{itemize}
             \item Notice the src/ folder
             \item Can have multiple packages in the same tree
-            \item Has a few benefits, no implicit import of source code
+            \item Has a few benefits, such as no implicit import of source code
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}{Directory layout 3/3}
+    \dirtree{%
+        .1 site-packages/.
+        .2 package/.
+        .3 __init__.py.
+        .3 core.py.
+        .3 helpers.py.
+        .2 numpy/.
+    }
+
+    \note{
+        \begin{itemize}
+            \item Both the previous examples, when built and install, end up
+                  like this
         \end{itemize}
     }
 \end{frame}
@@ -170,27 +208,91 @@ tests/test_advanced.py
 \end{frame}
 
 \begin{frame}{Some history}
+    \includegraphics[width=\textwidth]{pantheon.jpeg}
+    \note{
+        \begin{itemize}
+            \item Anyone know what building this is?
+            \item Important to understand how we got here
+        \end{itemize}
+    }
+\end{frame}
+
+
+\begin{frame}{Some history}
     \begin{description}
         \item [Late 90s] Python wanted something like CPAN
-        \item [2000] Distutils released for Python 1.6 standard library, where
-                     modules go to die
+        \item [2000] Distutils released for Python 1.6 standard library
         \item [2003] PyPI is online, distutils can create package metadata
-        \item [2008] Setuptools replaces distutils, pip builds on it
+        \item [2008] Setuptools extends and supersedes distutils, pip builds on it
     \end{description}
 
     \note{
+        \emph{Read the list}: standard library is where modules go to die
         \begin{itemize}
+            \item Notice \emph{everything builds on}
+            \item Setup written for distutils generally work with setuptools,
+                  strong backwards compatibility. This also means a lot of
+                  legacy
             \item Distutils came with infrastructure for building C code
-            \item Feels much intended for building Python extensions, by having
-                  the same compiler that built Python.
-            \item This is still common on unix-like systems, terrible on
-                  Windows where dealing with compilers is a pain.
+            \item Feels much intended for building Python extensions, using the
+                  same compiler that built Python.
+            \item This is terrible on Windows where dealing with compilers is a
+                  pain
             \item Uses homegrown compiler abstraction and option dispatch
-                  interface. Little robust auto discovery, half-way to cmake
-            \item Honestly, setup.py-files that do more than setup() tend to be
-                  low-effort, buggy, "works on my machine" solutions. Robust
-                  files get complicated \emph{fast}.
-            \item Pollutes source tree
+                  interface. No robust feature discovery, a C build-system but
+                  not really
+            \item Building pollutes source tree
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \begin{lstlisting}
+from setuptools import setup
+
+setup(
+    name = "example-project",
+    version = "0.0.4",
+    author = "Andrew Carter",
+    description = "Setuptools demonstration",
+    license = "BSD",
+    keywords = "example tutorial",
+    packages=['example_project', 'tests'],
+    long_description=read('README'),
+)
+    \end{lstlisting}
+{\tiny http://packages.python.org/an_example_pypi_project}
+
+    \note{
+        \begin{itemize}
+            \item This is for a pure python package
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \begin{lstlisting}
+setup(...,
+    ext_modules=[
+        Extension('foo', ['foo.c'],
+            include_dirs = ['include'],
+            define_macros = [
+                ('NDEBUG', '1'),
+                ('HAVE_STRFTIME', None),
+            ],
+            libraries = ['readline', 'm'],
+        )
+    )
+    \end{lstlisting}
+{\tiny https://docs.python.org/3/distutils/setupscript.html}
+
+    \note{
+        \begin{itemize}
+            \item If you've ever built C code for multiple platforms or even
+                  different computers you see how this can get problematic fast
+            \item Honestly, setup.py-files that do more than setup() and are
+                  pure python tend to be low-effort, buggy, \emph{works on my
+                  machine} solutions
         \end{itemize}
     }
 \end{frame}
@@ -210,15 +312,14 @@ tests/test_advanced.py
     \end{itemize}
 
     \note{
-        Read list
-
+        \emph{Read list}
         \begin{itemize}
             \item The experience compiling and developing native extensions is
                   terrible
             \item Setuptools has virtually nothing to help you here, boils down
                   to manually implementing half of cmake
             \item The development story is quite bad too
-            \item People end up hard-coding links top /opt/local/lib64, I can't
+            \item People end up hard-coding links to /opt/local/lib64, I can't
                   blame them
             \item Since setup.py implements build, install, test commands,
                   custom option commands are difficult or clumsy
@@ -229,10 +330,9 @@ tests/test_advanced.py
 \begin{frame}{Developing native code}
     \begin{itemize}
         \item Changes in headers aren't detected, and the module isn't
-              recompiled - not great when you have templates
-        \item Not designed for interactive development, desgined for
-              distribution
-        \item Setuptools assumes it controls the world, so it pollutes build
+              recompiled - not great with templates
+        \item Designed for distribution, not development
+        \item Setuptools assumes it controls the world, so it pollutes source
               trees. Not cool when python support is a sub project
     \end{itemize}
 
@@ -261,19 +361,22 @@ tests/test_advanced.py
 \end{frame}
 
 \begin{frame}{Enter scikit-build}
-    scikit-build
-
-    The scikit-build package is fundamentally just glue between the setuptools
-    Python module and CMake
-
-    - Scikit-build readme
+    \begin{displayquote}
+        The scikit-build package is fundamentally just glue between the
+        setuptools Python module and CMake
+    \end{displayquote}
+    - scikit-build readme
 
     \note{
         \begin{itemize}
-            \item In short, it automates building C++ with cmake, and automates
+            \item Briefly, it automates building C++ with cmake, and automates
                   dealing with python flags, layout, options.
-            \item For us, it did replace some homegrown attempts at the same
-                  thing
+            \item It adresses most of the shortcomings with setuptools for
+                  extensions
+            \item For distribution: feature autodiscovery, compiler config,
+                  dependency configuration etc
+            \item For development: easy debug/release builds, file-object
+                  dependency tracking, incremental builds
             \item Setuptools does what setuptools can (build python), cmake
                   does what cmake does
         \end{itemize}
@@ -291,12 +394,12 @@ tests/test_advanced.py
 
     \note{
         \begin{itemize}
-            \item Hate it or love it, cmake is good at tracking file
-                  dependencies, minimal builds etc
+            \item Hate it or love it, cmake is pretty good at what it does
             \item It's reasonably easy to set options, deal with compiler
-                  differences in cmake. When you have third-party dependencies
-                  that provide cmake-config or similar, you can easily get them
-                  from inside the python extension with find-package
+                  differences in cmake
+            \item When you have third-party dependencies that provide
+                  cmake-config or similar, you can easily get them from inside
+                  the python extension with find-package
             \item cmake is pretty good at dealing with platform differences
         \end{itemize}
     }
@@ -315,16 +418,19 @@ tests/test_advanced.py
                   extension, the python library, and docs if enabled
             \item And runs the tests, across all languages
             \item It uses setup.py to run the python build system, python
-                  doesn't really know that it's not the main driver
-            \item Assuming Python is the only player
+                  doesn't really know that it's not the main driver. This is
+                  the fat wrapper from before
+            \item Now, assuming the impure python, where python is the only
+                  player [next slide]
         \end{itemize}
     }
 \end{frame}
 
 \begin{frame}[fragile]{setup.py}
-    \verb|python3 setup.py build|
-
-    \verb|python3 setup.py test|
+    \begin{verbatim}
+python3 setup.py build
+python3 setup.py test
+    \end{verbatim}
 
     \note{
         \begin{itemize}
@@ -335,7 +441,7 @@ tests/test_advanced.py
 \end{frame}
 
 \begin{frame}[fragile]{setup.py}
-\begin{verbatim}
+    \begin{lstlisting}
 import skbuild
 skbuild.setup(
     name = 'pkg',
@@ -349,12 +455,20 @@ skbuild.setup(
     cmake_args = [
     ],
 )
-\end{verbatim}
+    \end{lstlisting}
 
+    \note{
+        \begin{itemize}
+            \item \emph{Read slowly}
+            \item scikit-build adds a few extra keys and some extra behaviour to
+                  setuptools.setup
+            \item It implicitly looks for a CMakeLists.txt in the root dir
+        \end{itemize}
+    }
 \end{frame}
 
 \begin{frame}[fragile]{CMakeLists.txt}
-\begin{verbatim}
+    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
 cmake_minimum_required(VERSION 3.5.0)
 project(extension LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 11)
@@ -370,7 +484,7 @@ if (MSVC)
 endif ()
 
 install(TARGETS core LIBRARY DESTINATION package)
-\end{verbatim}
+    \end{lstlisting}
 
     \note{
         \begin{itemize}
@@ -378,18 +492,18 @@ install(TARGETS core LIBRARY DESTINATION package)
                   are helpful
             \item It's still not perfect, obviously, but it is a huge leap
                   forward from setuptools and setuptools "abstractions"
-            \item Building redistributable packages, wheels, has not been
-                  discussed yet, but we'll get to that later
+            \item Building correctly is a prerequisite for redistributable
+                  packages, wheels. We'll get to that later
         \end{itemize}
     }
 \end{frame}
 
 \begin{frame}[fragile]{Integration with cmake}
-
-\begin{verbatim}
+    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
 add_custom_target(
     dlisio-python ALL
-    SOURCES ${setup.py} DEPENDS ${setup.py}
+    SOURCES ${setup.py}
+    DEPENDS ${setup.py}
     VERBATIM
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND ${python} ${setup.py}
@@ -400,15 +514,12 @@ add_custom_target(
             ${DLISIO_PYTHON_BUILD_TYPE}
         -- # scikit-build cmake args
             -Ddlisio_DIR=${DLISIO_LIB_BINARY_DIR}
-            # "install" to the python/dlisio dir with rpath, so there's no need
-            # to fiddle with environment in ctest to load the core library from
-            # the build tree
             -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
             -DCMAKE_INSTALL_RPATH=$<TARGET_FILE_DIR:dlisio>
             -DCMAKE_INSTALL_NAME_DIR=$<TARGET_FILE_DIR:dlisio>
 )
 add_dependencies(dlisio-python dlisio)
-\end{verbatim}
+    \end{lstlisting}
 
 \note{
     \begin{itemize}
@@ -418,12 +529,12 @@ add_dependencies(dlisio-python dlisio)
               other C++ lib from cmake's perspective
         \item Build in-place so that tests can be run directly on the source
               tree. Setuptools pollutes this directory anyway, so we're not
-              really that much worse off.
+              really that much worse off - this is the path of least resistance
         \item Scikit-build builds for different python versions in different
               dirs, so they coexist ok
-        \item Python's own build system tracks dependencies - the drawback is
-              even though there's nothing to do we still must run the seutp.py
-              file. This is somewhat slow, but an acceptable tradeoff
+        \item setup.py tracks the python dependencies - the drawback is even
+              though there's nothing to do we still must run the seutp.py file.
+              This is somewhat slow, but an acceptable tradeoff
     \end{itemize}
 }
 \end{frame}
@@ -431,25 +542,28 @@ add_dependencies(dlisio-python dlisio)
 \begin{frame}[fragile]{Building wheels}
     The python packaging format is the \emph{wheel}
 
-    \begin{itemize}
-        \item setup.py can build with \verb|setup.py bdist_wheel|
-        \item Relies on naming to distinguish package flavours
-        \item Can both be pure python or include binary components
-        \item pip resolves these names from the host system
-    \end{itemize}
+    \begin{block}{}
+        \begin{itemize}
+            \item setup.py can build with \verb|setup.py bdist_wheel|
+            \item Relies on naming to distinguish package flavours
+            \item Can both be pure python or include binary components
+            \item pip resolves these names from the host system
+        \end{itemize}
+    \end{block}
 
-From PyPI:
-    \begin{verbatim}
+    \begin{block}{From PyPI}
+        \begin{verbatim}
 segyio-1.8.6-cp37-cp37m-manylinux1_x86_64.whl (87.5 kB)
 segyio-1.8.6-cp37-cp37m-win32.whl (83.4 kB)
 segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
-    \end{verbatim}
+        \end{verbatim}
+    \end{block}
 
     \note{
         \begin{itemize}
-            \item Read list on screen
+            \item \emph{Read list on screen}
             \item OS X was omitted because it's quite long, but follows the
-                  same
+                  same pattern
             \item The manylinux image is specified by the PyPA, basically the
                   oldest libc + supporting libs they could use (RHEL5)
         \end{itemize}
@@ -488,9 +602,9 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 \end{frame}
 
 \begin{frame}{Build automation}
-    Lesson:
-
-    Things not automated will not be done
+    \begin{block}{Lesson}
+        Things not done automatically will not be done
+    \end{block}
     \note{
         \begin{itemize}
             \item ?
@@ -499,11 +613,12 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 \end{frame}
 
 \begin{frame}{Build automation}
-    % logos: travis appveyor circle
+    % logos: picture of snake from akvariet
     \note{
         \begin{itemize}
-            \item These are what we use currently, but like with code there's
-                  always maintenance, considering other providers etc.
+            \item We use multiple - travis, circle, appveyor. These are what we
+                  use currently, but like with code there's always maintenance,
+                  considering other providers etc
             \item We use them to test on all platforms, multiple versions
             \item Run on every pull request before merge, and all HEADs on
                   master
@@ -527,6 +642,34 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
             \item CI is scripts + machine definition + triggers
             \item Perfect usecase for obsolete systems like RHEL5 and Windows
             \item Which happens to be what we need to build wheels pip can use
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Deploy}
+\begin{lstlisting}
+deploy:
+    - provider: pypi
+      skip_cleanup: true
+      skip_upload_docs: true
+      skip_existing: true
+      user: statoil-travis
+      distributions: --skip-cmake build sdist
+      password:
+        secure: encrypted-key
+      on:
+        tags: true
+\end{lstlisting}
+
+    \note{
+        \begin{itemize}
+            \item Whenever a new tag is pushed, which also happens with the
+                  release-feature on github, this runs at the end of the job
+            \item It takes the freshly-built package and uploads it to pypi
+            \item That means the only thing done to publish new releases is to
+                  create a new tag
+            \item Means tags are the authority and single source of truth
+            \item TODO: Diagram of this flow?
         \end{itemize}
     }
 \end{frame}
