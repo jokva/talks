@@ -85,7 +85,7 @@
     }
 \end{frame}
 
-\begin{frame}{Some goals}
+\begin{frame}{A goal}
     python3 -m pip install pkg
 \end{frame}
 
@@ -101,7 +101,9 @@
 \end{frame}
 
 \begin{frame}
-    \includegraphics[width=\textwidth]{snake.jpg}
+    \begin{center}
+    \includegraphics[keepaspectratio, height = 0.9\textheight]{snake.jpg}
+    \end{center}
     \note {
         This is a Python package
     }
@@ -264,7 +266,6 @@ setup(
     license = "BSD",
     keywords = "example tutorial",
     packages=['example_project', 'tests'],
-    long_description=read('README'),
 )
     \end{lstlisting}
 {\tiny http://packages.python.org/an_example_pypi_project}
@@ -354,9 +355,10 @@ setup(...,
     }
 \end{frame}
 
-\begin{frame}
-    Is all hope lost?
-
+\begin{frame}{Is all hope lost?}
+    \begin{center}
+    \includegraphics[keepaspectratio, height = 0.8\textheight]{fall-of-lucifer.jpg}
+    \end{center}
     \note{
         \begin{itemize}
             \item The talk name did hint of a solution
@@ -411,7 +413,7 @@ setup(...,
     }
 \end{frame}
 
-\begin{frame}[fragile]{Intermission: automate everything}
+\begin{frame}[fragile]{Intermezzo: automate everything}
 
     \verb|make -j8 && ctest --output-on-failure|
 
@@ -576,6 +578,18 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
     }
 \end{frame}
 
+\begin{frame}[fragile]{Intermezzo: building wheel on Debian 10 (Buster)}
+    \verb|segyio-1.8.6-cp37-cp37m-linux_x86_64.whl|
+    \note{
+        \begin{itemize}
+            \item Notice it says linux, not manylinux. Pip will not fetch
+                  packages with this tag, but you can install it at your own
+                  machine
+            \item Which happens to be what we need to build wheels pip can use
+        \end{itemize}
+    }
+\end{frame}
+
 \begin{frame}
     Problem: I have no machine running Windows
 \end{frame}
@@ -589,6 +603,9 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 \end{frame}
 
 \begin{frame}{Build automation}
+    \begin{center}
+    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
+    \end{center}
     \note{
         \begin{itemize}
             \item Ok, so now we can reasonably easy build and develop on the
@@ -613,43 +630,61 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
     \end{block}
     \note{
         \begin{itemize}
-            \item ?
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}{Build automation}
-    % logos: picture of snake from akvariet
-    \note{
-        \begin{itemize}
             \item We use multiple - travis, circle, appveyor. These are what we
-                  use currently, but like with code there's always maintenance,
+                  use rigt now, but like with code there's always maintenance,
                   considering other providers etc
             \item We use them to test on all platforms, multiple versions
             \item Run on every pull request before merge, and all HEADs on
                   master
             \item We also use it for building and releasing packages
+            \item CI is scripts + machine definition + triggers
+            \item Perfect usecase for obsolete systems like RHEL5 and Windows
             \item So what does it look like?
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Build automation}
+    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+commands:
+  cmake_build:
+    steps:
+      - run:
+          name: configure
+          command: |
+            mkdir build && cd build
+            cmake -DBUILD_SHARED_LIBS=ON \
+                  -DPYTHON_EXECUTABLE=`which python3` \
+                  ..
+      - run:
+          name: build, install, test
+          command: |
+            cmake --build build --target install
+            cd build && ctest --output-on-failure
+
+jobs:
+  gcc:
+    docker:
+      - image: debian:stable
+    steps:
+      - checkout
+      - install_build_deps
+      - cmake_build
+    \end{lstlisting}
+    \note{
+        \begin{itemize}
+            \item This is for one of our CircleCI configs (we have about 10)
+                  and abbreviated slightly for slide purposes
+            \item The other services are configured similarly
+            \item Usually it's a yaml with special keys and inline scripts -
+                  they're all reasonably well documented
         \end{itemize}
     }
 \end{frame}
 
 \begin{frame}{Build automation}
     % Workflow pictorial
-\end{frame}
-
-\begin{frame}[fragile]{Intermezzo: building wheel on Debian 10 (Buster)}
-    \verb|segyio-1.8.6-cp37-cp37m-linux_x86_64.whl|
-    \note{
-        \begin{itemize}
-            \item Notice it says linux, not manylinux. Pip will not fetch
-                  packages with this tag, but you can install it at your own
-                  machine
-            \item CI is scripts + machine definition + triggers
-            \item Perfect usecase for obsolete systems like RHEL5 and Windows
-            \item Which happens to be what we need to build wheels pip can use
-        \end{itemize}
-    }
+    fork -> PR -> green checkmark -> merge -> deploy
 \end{frame}
 
 \begin{frame}[fragile]{Deploy}
