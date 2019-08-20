@@ -34,7 +34,7 @@
 
 \RequirePackage{listings}
 % use monospaced fonts in listings
-\lstset{basicstyle=\ttfamily}
+\lstset{basicstyle=\ttfamily\scriptsize}
 
 \mode<presentation>{}
 
@@ -85,7 +85,7 @@
 \end{frame}
 
 \begin{frame}{A goal}
-    python3 -m pip install pkg
+    python3 -m pip install my-project
 \end{frame}
 
 \begin{frame}{pip install}
@@ -244,12 +244,13 @@
                   legacy
             \item Distutils came with infrastructure for building C code
             \item Feels much intended for building Python extensions, using the
-                  same compiler that built Python.
+                  same compiler that built Python
             \item This is terrible on Windows where dealing with compilers is a
                   pain
             \item Uses homegrown compiler abstraction and option dispatch
-                  interface. No robust feature discovery, a C build-system but
-                  not really
+                  interface
+            \item No custom options really, stuck on the configuration
+                  setuptools already has
             \item Building pollutes source tree
             \item Let's start building a package
         \end{itemize}
@@ -315,10 +316,27 @@
             \item ... until we also want to build with clang
             \item If you've ever built C++ for multiple platforms or even
                   different computers you see how this can get problematic fast
+            \item It's quite hard to ad-hoc configure on new systems
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \begin{verbatim}
+# setuptools on microsoft compilers doesn't support the --library-dir or
+# --build-dir flag and crashes, so only pass it on non-microsoft platforms
+    \end{verbatim}
+    \note{
+        \begin{itemize}
+            \item This is a snippet from our project segyio
+            \item setuptools actually \emph{crashed} on being given
+                  --library-dirs
+            \item Ok, so maybe not pass it when you're sitting on windows, but
+                  what about when this is in scripts
             \item Honestly, setup.py-files that do more than setup() and are
                   pure python tend to be low-effort, buggy, \emph{works on my
                   machine} solutions
-            \item So now, we give up
+            \item At this point we give up
         \end{itemize}
     }
 \end{frame}
@@ -434,103 +452,64 @@
 
 \begin{frame}[fragile]{scikit-build}
     \lstinputlisting{my-package/CMakeLists.txt}
+
+    \note {
+        \begin{itemize}
+            \item This is really it. It works quite well, and the maintainers
+                  are helpful
+            \item Ok, but let's pretend we want to also link against zlib
+        \end{itemize}
+    }
 \end{frame}
 
-\begin{frame}[fragile]{Intermezzo: automate everything}
+\begin{frame}[fragile]{scikit-build}
+    \lstinputlisting{my-package/CMakeLists-zlib.txt}
+    \note{
+        \begin{itemize}
+            \item All we had to do was find-package and target-link-libraries
+            \item We outsource the dealing with platforms, linking and
+                  detection to cmake
+            \item The python build script is unaware - this is all a detail
+                  of the extension anyway
+            \item Let's assume that on the dev machine, zlib is installed in a
+                  non-standard location
+        \end{itemize}
+    }
+\end{frame}
 
+\begin{frame}[fragile]{scikit-build}
+    \verb|python3 setup.py build -- -DZLIB_DIR=~/.local/share/zlib|
+
+    \note {
+        \begin{itemize}
+            \item scikit-build allows easy access to cmake configuration
+            \item unlike setuptools before, because scikit-build actually
+                  extended argument parsing
+            \item Now we can easily configure the library without changing
+                  build script code
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{Intermezzo: cmake integration}
+
+    \verb|mkdir build && cd build && cmake ..|
     \verb|make -j8 && ctest --output-on-failure|
 
     \note{
         \begin{itemize}
             \item This command is really what I mostly do during development
-            \item From a clean checkout, running cmake and then this is
-                  sufficient
             \item It builds the core libraries, some applications, the python
                   extension, the python library, and docs if enabled
             \item And runs the tests, across all languages
-            \item It uses setup.py to run the python build system, python
-                  doesn't really know that it's not the main driver. This is
-                  the fat wrapper from before
-            \item Now, assuming the impure python, where python is the only
-                  player [next slide]
+            \item It uses relies on setup.py to build and test python
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{setup.py}
-    \begin{verbatim}
-python3 setup.py build
-python3 setup.py test
-    \end{verbatim}
 
-    \note{
-        \begin{itemize}
-            \item This is what we want to run
-            \item Let's look at the code needed to drive this
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}[fragile]{setup.py}
+\begin{frame}[fragile]{Intermezzo: cmake integration}
     \begin{lstlisting}
-import skbuild
-skbuild.setup(
-    name = 'pkg',
-    packages = [
-        'pkg',
-        'pkg.module',
-    ],
-    install_requires = [
-        'numpy',
-    ],
-    cmake_args = [
-    ],
-)
-    \end{lstlisting}
-
-    \note{
-        \begin{itemize}
-            \item \emph{Read slowly}
-            \item scikit-build adds a few extra keys and some extra behaviour to
-                  setuptools.setup
-            \item It implicitly looks for a CMakeLists.txt in the root dir
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}[fragile]{CMakeLists.txt}
-    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
-cmake_minimum_required(VERSION 3.5.0)
-project(extension LANGUAGES C CXX)
-set(CMAKE_CXX_STANDARD 11)
-
-find_package(PythonExtensions REQUIRED)
-find_package(package REQUIRED)
-
-add_library(core MODULE src/core.cpp)
-python_extension_module(core)
-target_link_libraries(core package::lib)
-if (MSVC)
-    target_compile_options(core PRIVATE /EHsc)
-endif ()
-
-install(TARGETS core LIBRARY DESTINATION package)
-    \end{lstlisting}
-
-    \note{
-        \begin{itemize}
-            \item This is really it. It works quite well, and the maintainers
-                  are helpful
-            \item It's still not perfect, obviously, but it is a huge leap
-                  forward from setuptools and setuptools "abstractions"
-            \item Building correctly is a prerequisite for redistributable
-                  packages, wheels. We'll get to that later
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}[fragile]{Integration with cmake}
-    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
 add_custom_target(
     dlisio-python ALL
     SOURCES ${setup.py}
@@ -559,8 +538,11 @@ add_dependencies(dlisio-python dlisio)
               be confusing, but it makes so the python lib behaves like any
               other C++ lib from cmake's perspective
         \item Build in-place so that tests can be run directly on the source
-              tree. Setuptools pollutes this directory anyway, so we're not
-              really that much worse off - this is the path of least resistance
+              tree
+        \item setuptools pollutes this directory anyway, so we're not
+              really that much worse off
+        \item Go the path of least resistance, even if it is ridiculous
+        \item If you fight against the tool you simply won't win
         \item Scikit-build builds for different python versions in different
               dirs, so they coexist ok
         \item setup.py tracks the python dependencies - the drawback is even
@@ -571,13 +553,27 @@ add_dependencies(dlisio-python dlisio)
 \end{frame}
 
 \begin{frame}[fragile]{Building wheels}
-    The python packaging format is the \emph{wheel}
+    \begin{block}{On Debian 10 (Buster)}
+        \begin{verbatim}
+$ python3 setup.py bdist_wheel
+$ ls dist/
+my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
+        \end{verbatim}
+    \end{block}
 
+    \note{
+        \begin{itemize}
+            \item Notice the tag says linux. Not well suited for distribution
+                  because users might have older libc
+            \item For good binaries we need the manylinux tag
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
     \begin{block}{}
         \begin{itemize}
-            \item setup.py can build with \verb|setup.py bdist_wheel|
-            \item Relies on naming to distinguish package flavours
-            \item Can both be pure python or include binary components
+            \item An ABI tag helps pip select the right package
             \item pip resolves these names from the host system
         \end{itemize}
     \end{block}
@@ -597,18 +593,7 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
                   same pattern
             \item The manylinux image is specified by the PyPA, basically the
                   oldest libc + supporting libs they could use (RHEL5)
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}[fragile]{Intermezzo: building wheel on Debian 10 (Buster)}
-    \verb|segyio-1.8.6-cp37-cp37m-linux_x86_64.whl|
-    \note{
-        \begin{itemize}
-            \item Notice it says linux, not manylinux. Pip will not fetch
-                  packages with this tag, but you can install it at your own
-                  machine
-            \item Which happens to be what we need to build wheels pip can use
+            \item Windows packages built on Windows, linux on RHEL5 etc.
         \end{itemize}
     }
 \end{frame}
@@ -619,99 +604,65 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 
 \begin{frame}
     Problem: I have no machine running Red Hat 5
-
-    \note{
-        We'll solve these problems in a bit
-    }
-\end{frame}
-
-\begin{frame}{Build automation}
-    \begin{center}
-    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
-    \end{center}
-    \note{
-        \begin{itemize}
-            \item Ok, so now we can reasonably easy build and develop on the
-                  developer machine
-            \item That's still not enough - want to test multiple versions,
-                  compilers, operating systems
-            \item Most of our projects \emph{are} in fact used across multiple
-                  systems, but even if that wasn't the case I'd still insist on
-                  it
-            \item Targeting different systems improves robustness and
-                  correctness - if platforms differ it's because of latent bugs
-            \item Also helps the contributor experience - contributors don't
-                  have to set up massive rigs, and are generally terrible at
-                  running and writing tests
-        \end{itemize}
-    }
 \end{frame}
 
 \begin{frame}{Build automation}
     \begin{block}{Lesson}
         Things not done automatically will not be done
     \end{block}
+\end{frame}
+
+\begin{frame}{Build automation}
+    machine definitions + scripts + triggers
     \note{
         \begin{itemize}
-            \item We use multiple - travis, circle, appveyor. These are what we
-                  use rigt now, but like with code there's always maintenance,
-                  considering other providers etc
-            \item We use them to test on all platforms, multiple versions
-            \item Run on every pull request before merge, and all HEADs on
-                  master
-            \item We also use it for building and releasing packages
-            \item CI is scripts + machine definition + triggers
-            \item Perfect usecase for obsolete systems like RHEL5 and Windows
+            \item A machine definition would be perfect for obsolete systems
+                  like RHEL5 and Windows
+            \item Multiple machine definitions means we can test on multiple
+                  systems
+            \item With triggers, they can now run on every PR and every HEAD
+                  pushed
+            \item A new release can also be a trigger
+            \item Makes it easier for contributers too, they don't have to set
+                  up a complicated rig to run the new changes on multiple
+                  systems
             \item So what does it look like?
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{Build automation}
-    \begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
-commands:
-  cmake_build:
-    steps:
-      - run:
-          name: configure
-          command: |
-            mkdir build && cd build
-            cmake -DBUILD_SHARED_LIBS=ON \
-                  -DPYTHON_EXECUTABLE=`which python3` \
-                  ..
-      - run:
-          name: build, install, test
-          command: |
-            cmake --build build --target install
-            cd build && ctest --output-on-failure
+\begin{frame}{Build-and-test PR 1/2}
+    \includegraphics[width = \textwidth]{github-green-checkmark.png}
+\end{frame}
 
-jobs:
-  gcc:
-    docker:
-      - image: debian:stable
-    steps:
-      - checkout
-      - install_build_deps
-      - cmake_build
-    \end{lstlisting}
-    \note{
+\begin{frame}{Build-and-test PR 2/2}
+    \includegraphics[width = \textwidth]{github-checks-passed.png}
+\end{frame}
+
+\begin{frame}{Build automation}
+    \begin{center}
+    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Deploy}
+    \includegraphics[width = \textwidth]{travis-dlisio-jobs.png}
+    \note {
         \begin{itemize}
-            \item This is for one of our CircleCI configs (we have about 10)
-                  and abbreviated slightly for slide purposes
-            \item The other services are configured similarly
-            \item Usually it's a yaml with special keys and inline scripts -
-                  they're all reasonably well documented
+            \item I mentioned a trigger was a tag
+            \item On tags, our deploy logic is run, which as its final step
+                  uploads the freshly-built wheels
+            \item This means the released archives are never built on developer
+                  machines
+            \item And we have a one-click deploy feature in place
+            \item It's great for velocity, and it means \emph{any} team member
+                  can deploy new releases
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}{Build automation}
-    % Workflow pictorial
-    fork -> PR -> green checkmark -> merge -> deploy
-\end{frame}
-
 \begin{frame}[fragile]{Deploy}
-\begin{lstlisting}
+    \begin{lstlisting}
 deploy:
     - provider: pypi
       skip_cleanup: true
@@ -723,19 +674,75 @@ deploy:
         secure: encrypted-key
       on:
         tags: true
-\end{lstlisting}
+    \end{lstlisting}
+\end{frame}
 
-    \note{
+\begin{frame}
+    \note {
         \begin{itemize}
-            \item Whenever a new tag is pushed, which also happens with the
-                  release-feature on github, this runs at the end of the job
-            \item It takes the freshly-built package and uploads it to pypi
-            \item That means the only thing done to publish new releases is to
-                  create a new tag
-            \item Means tags are the authority and single source of truth
-            \item TODO: Diagram of this flow?
+            \item There's no zlib on the user machine
+            \item We'd still like the pip-package to \emph{just work}
+            \item In particular an issue for fat wrappers around not-always
+                  distributed libraries
         \end{itemize}
     }
+\end{frame}
+
+\begin{frame}
+    Solution: distribute zlib with the wheel
+
+    \note {
+        \begin{itemize}
+            \item There's no zlib on the user machine
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{On Debian 10 (Buster)}
+        \begin{lstlisting}
+$ auditwheel repair dist/my_project-0.0.1.whl
+Fixed-up wheel written to wheelhouse/my_project-0.0.1.whl
+$ unzip -l wheelhouse/my_project-0.0.1.whl
+Archive:  wheelhouse/my_project-0.0.1.whl
+  Length   Name
+---------  ----
+       19  my_package/__init__.py
+        0  my_package/core.py
+    34432  my_package/math.cpython-35m-x86_64-linux-gnu.so
+  2646632  my_package/.libs/libstdc++-4376550d.so.6.0.22
+  3820672  my_package/.libs/libc-2-d37be6b0.24.so
+  1072968  my_package/.libs/libm-2-bfba5a97.24.so
+   101072  my_package/.libs/libgcc_s-41124e5d.so.1
+   112496  my_package/.libs/libz-7fd423a0.so.1.2.8
+     1072  my_project-0.0.1.dist-info/RECORD
+       11  my_project-0.0.1.dist-info/top_level.txt
+      173  my_project-0.0.1.dist-info/METADATA
+       98  my_project-0.0.1.dist-info/WHEEL
+---------  --------
+  7789645  12 files
+        \end{lstlisting}
+    \end{block}
+    \note {
+        \begin{itemize}
+            \item There's a similar tool for macos, delocate
+            \item And there you have it
+            \item All that's left now is
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \verb|python3 -m pip install my-project|
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Shoutouts}
+        \begin{description}
+            \item [scikit-build] Python and C++ build system
+            \item [multibuild] Matthew Brett's wheel building automation
+        \end{description}
+    \end{block}
 \end{frame}
 
 \end{document}
