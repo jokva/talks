@@ -30,7 +30,6 @@
 \lstset{moredelim=**[is][\color{red}]{@}{@}}
 
 \RequirePackage{dirtree}
-\RequirePackage{underscore}
 \RequirePackage{csquotes}
 
 \RequirePackage{listings}
@@ -130,15 +129,15 @@
         .2 setup.py.
         .2 requirements.txt.
         .2 package/.
-        .3 __init__.py.
+        .3 {\_\_}init{\_\_}.py.
         .3 core.py.
         .3 helpers.py.
         .2 docs/.
         .3 conf.py.
         .3 index.rst.
         .2 tests/.
-        .3 test_basic.py.
-        .3 test_advanced.py.
+        .3 test{\_}basic.py.
+        .3 test{\_}advanced.py.
     }
 
     {\tiny https://www.kennethreitz.org/essays/repository-structure-and-python}
@@ -164,15 +163,15 @@
         .2 requirements.txt.
         .2 src/.
         .3 package/.
-        .4 __init__.py.
+        .4 {\_\_}init{\_\_}.py.
         .4 core.py.
         .4 helpers.py.
         .2 docs/.
         .3 conf.py.
         .3 index.rst.
         .2 tests/.
-        .3 test_basic.py.
-        .3 test_advanced.py.
+        .3 test{\_}basic.py.
+        .3 test{\_}advanced.py.
     }
 
     \note{
@@ -187,11 +186,13 @@
 \begin{frame}{Directory layout 3/3}
     \dirtree{%
         .1 site-packages/.
-        .2 package/.
-        .3 __init__.py.
+        .2 my-package/.
+        .3 {\_\_}init{\_\_}.py.
         .3 core.py.
         .3 helpers.py.
         .2 numpy/.
+        .2 pandas/.
+        .2 minisat/.
     }
 
     \note{
@@ -250,56 +251,74 @@
                   interface. No robust feature discovery, a C build-system but
                   not really
             \item Building pollutes source tree
+            \item Let's start building a package
         \end{itemize}
     }
 \end{frame}
 
 \begin{frame}[fragile]{setuptools}
-    \begin{lstlisting}
-from setuptools import setup
-
-setup(
-    name = "example-project",
-    version = "0.0.4",
-    author = "Andrew Carter",
-    description = "Setuptools demonstration",
-    license = "BSD",
-    keywords = "example tutorial",
-    packages=['example_project', 'tests'],
-)
-    \end{lstlisting}
-{\tiny http://packages.python.org/an_example_pypi_project}
+    \lstinputlisting{my-package/setuptools-pure.py}
 
     \note{
         \begin{itemize}
             \item This is for a pure python package
+            \item It's quite minimal, setuptools support a wide range of keys
+                  and metadata. It can figure some things out, since our
+                  project is "standard layout".
+            \item Let's add some native code, a C extension
         \end{itemize}
     }
 \end{frame}
 
 \begin{frame}[fragile]{setuptools}
+    \lstinputlisting{my-package/my_package/math/math.c}
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \lstinputlisting{my-package/setuptools-ext.py}
+\end{frame}
+
+\begin{frame}[fragile]{setuptools + extension}
     \begin{lstlisting}
-setup(...,
-    ext_modules=[
-        Extension('foo', ['foo.c'],
-            include_dirs = ['include'],
-            define_macros = [
-                ('NDEBUG', '1'),
-                ('HAVE_STRFTIME', None),
-            ],
-            libraries = ['readline', 'm'],
-        )
-    )
+>>> import my_package
+>>> my_package.math.add(1, 2)
+3
     \end{lstlisting}
-{\tiny https://docs.python.org/3/distutils/setupscript.html}
+    \note {
+        \begin{itemize}
+            \item This extension is, of course, trivial
+            \item Let's spice it up and use C++11
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \lstinputlisting{my-package/my_package/math/math11.cpp}
+    \note{
+        \begin{itemize}
+            \item This now fails on gcc < 6.0, because C++98 was still the
+                  default
+            \item Of course it's still valid C++, so it just needs the option
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{setuptools}
+    \lstinputlisting{my-package/setuptools-ext11.py}
 
     \note{
         \begin{itemize}
-            \item If you've ever built C code for multiple platforms or even
+            \item Ok good, so this builds... on linux
+            \item MSVC doesn't understand this flag
+            \item So now our script needs to detect compiler and only set the
+                  flag on gcc
+            \item ... until we also want to build with clang
+            \item If you've ever built C++ for multiple platforms or even
                   different computers you see how this can get problematic fast
             \item Honestly, setup.py-files that do more than setup() and are
                   pure python tend to be low-effort, buggy, \emph{works on my
                   machine} solutions
+            \item So now, we give up
         \end{itemize}
     }
 \end{frame}
@@ -355,7 +374,7 @@ setup(...,
     }
 \end{frame}
 
-\begin{frame}{Is all hope lost?}
+\begin{frame}{Is paradise lost?}
     \begin{center}
     \includegraphics[keepaspectratio, height = 0.8\textheight]{fall-of-lucifer.jpg}
     \end{center}
@@ -411,6 +430,10 @@ setup(...,
             \item cmake is pretty good at dealing with platform differences
         \end{itemize}
     }
+\end{frame}
+
+\begin{frame}[fragile]{scikit-build}
+    \lstinputlisting{my-package/CMakeLists.txt}
 \end{frame}
 
 \begin{frame}[fragile]{Intermezzo: automate everything}
