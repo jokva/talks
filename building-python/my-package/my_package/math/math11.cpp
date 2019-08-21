@@ -1,6 +1,6 @@
 #include <Python.h>
 
-static PyObject *add(PyObject*, PyObject *args) noexcept (true) {
+static PyObject *add(PyObject*, PyObject *args) noexcept {
     int x, y;
     if (!PyArg_ParseTuple(args, "ii", &x, &y))
         return nullptr;

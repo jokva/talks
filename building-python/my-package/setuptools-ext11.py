@@ -8,7 +8,7 @@ setuptools.setup(
     ext_modules = [my_math],
     name = 'my-project',
     version = '0.0.1',
-    author = 'J. Kvalsvik',
+    author = 'J Kvalsvik',
     license = 'BSD',
-    packages=['my_package', 'my_package.math'],
+    packages = ['my_package', 'my_package.math'],
 )

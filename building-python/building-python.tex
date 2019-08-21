@@ -44,19 +44,23 @@
 \titlegraphic{\includegraphics[width=0.33\textwidth]{equinor-red.eps}}
 
 \begin{document}
+
+% title-page + title-page notes
 \maketitle
+\note {
+    \begin{itemize}
+        \item Introduce me and my team
+        \item Python is pretty good at high-level problem description
+        \item We still want to do the heavy lifting in C++
+        \item Good examples are tensorflow, scikit-learn, numpy
+        \item Our colleagues use python, and want us to provide ready-to-use
+              packages
+        \item Then you need to \emph{build} then, and we have made some painful
+              experiences with that
+    \end{itemize}
+}
 
-\begin{frame}{Outline}
-    \tableofcontents
-
-    \note{
-        \begin{itemize}
-            \item something python api for users
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}{Types of Python}
+\begin{frame}{Kinds of Python}
     \begin{itemize}
         \item Pure python
         \item Impure Python (non-python code behind CPython API)
@@ -71,14 +75,13 @@
                   Numpy and chunks of the python standard library are good
                   examples.
             \item Thin wrappers rely on some system provided library and
-                  provide an entry point from Python. Ctypes is often use for
-                  this - fire, wait, and parse the output
-            \item Rely on larger, often system-wide external libraries, but do
-                  more than just provide an entry point - sophisticated I/O,
-                  manipulation of state, and rich access to library
-                  functionality. Difference between this and impure python is
-                  that numpy's backend is only available in python, contrary to
-                  say python-BLAS
+                  provide an entry point from Python. Fire, wait, and parse the
+                  output
+            \item Rely on larger,  but do more than just provide an entry point
+                  - sophisticated I/O, manipulation of state, and rich access
+                  to library functionality. Difference between this and impure
+                  python is that numpy's backend is only available in python,
+                  contrary to say python-BLAS
         \end{itemize}
         We'll focus on impure and fat library.
     }
@@ -86,6 +89,11 @@
 
 \begin{frame}{A goal}
     python3 -m pip install my-project
+
+    \note {
+        This is the only end-user code in this talk. The rest is of it is all
+        developer centric
+    }
 \end{frame}
 
 \begin{frame}{pip install}
@@ -104,7 +112,7 @@
     \includegraphics[keepaspectratio, height = 0.9\textheight]{snake.jpg}
     \end{center}
     \note {
-        This is a Python package
+        This is a Python package, or rather, a packaged Python
     }
 \end{frame}
 
@@ -121,7 +129,7 @@
     }
 \end{frame}
 
-\begin{frame}{Directory layout 1/3}
+\begin{frame}{Directory layout 1/2}
     \dirtree{%
         .1 project/.
         .2 README.rst.
@@ -154,36 +162,7 @@
     }
 \end{frame}
 
-\begin{frame}{Directory layout 2/3}
-    \dirtree{%
-        .1 project/.
-        .2 README.rst.
-        .2 LICENSE.
-        .2 setup.py.
-        .2 requirements.txt.
-        .2 src/.
-        .3 package/.
-        .4 {\_\_}init{\_\_}.py.
-        .4 core.py.
-        .4 helpers.py.
-        .2 docs/.
-        .3 conf.py.
-        .3 index.rst.
-        .2 tests/.
-        .3 test{\_}basic.py.
-        .3 test{\_}advanced.py.
-    }
-
-    \note{
-        \begin{itemize}
-            \item Notice the src/ folder
-            \item Can have multiple packages in the same tree
-            \item Has a few benefits, such as no implicit import of source code
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}{Directory layout 3/3}
+\begin{frame}{Directory layout 2/2}
     \dirtree{%
         .1 site-packages/.
         .2 my-package/.
@@ -204,19 +183,21 @@
 \end{frame}
 
 \begin{frame}{\emph{Building} interpreted packages 2/2}
-    Building is the transformation from a source-tree to something predictably
-    laid out in site-packages
+    \begin{block}{Building a package}
+        The transformation of a source tree to a format ready for user
+        consumption
+    \end{block}
 
     \note{
         \begin{itemize}
             \item For this, \emph{if} you conform to a common project layout,
-                  python tooling works reasonably well.
+                  python tooling works reasonably well
             \item How did we get here?
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}{Some history}
+\begin{frame}{Some history 1/2}
     \includegraphics[width=\textwidth]{pantheon.jpeg}
     \note{
         \begin{itemize}
@@ -226,8 +207,7 @@
     }
 \end{frame}
 
-
-\begin{frame}{Some history}
+\begin{frame}{Some history 2/2}
     \begin{description}
         \item [Late 90s] Python wanted something like CPAN
         \item [2000] Distutils released for Python 1.6 standard library
@@ -238,17 +218,14 @@
     \note{
         \emph{Read the list}: standard library is where modules go to die
         \begin{itemize}
-            \item Notice \emph{everything builds on}
             \item Setup written for distutils generally work with setuptools,
                   strong backwards compatibility. This also means a lot of
                   legacy
-            \item Distutils came with infrastructure for building C code
-            \item Feels much intended for building Python extensions, using the
-                  same compiler that built Python
+            \item Distutils came with infrastructure for building C code, a
+                  uses homegrown compiler abstraction
+            \item Assumes the same compiler that built Python is available
             \item This is terrible on Windows where dealing with compilers is a
                   pain
-            \item Uses homegrown compiler abstraction and option dispatch
-                  interface
             \item No custom options really, stuck on the configuration
                   setuptools already has
             \item Building pollutes source tree
@@ -257,7 +234,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{setuptools 1/3}
     \lstinputlisting{my-package/setuptools-pure.py}
 
     \note{
@@ -265,21 +242,21 @@
             \item This is for a pure python package
             \item It's quite minimal, setuptools support a wide range of keys
                   and metadata. It can figure some things out, since our
-                  project is "standard layout".
-            \item Let's add some native code, a C extension
+                  project is \emph{standard layout}
+            \item Let's write some native code, a C extension
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{my-package extension 1/2}
     \lstinputlisting{my-package/my_package/math/math.c}
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{setuptools 2/3}
     \lstinputlisting{my-package/setuptools-ext.py}
 \end{frame}
 
-\begin{frame}[fragile]{setuptools + extension}
+\begin{frame}[fragile]{}
     \begin{lstlisting}
 >>> import my_package
 >>> my_package.math.add(1, 2)
@@ -293,7 +270,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{my-package extension 2/2}
     \lstinputlisting{my-package/my_package/math/math11.cpp}
     \note{
         \begin{itemize}
@@ -304,7 +281,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{setuptools 3/3}
     \lstinputlisting{my-package/setuptools-ext11.py}
 
     \note{
@@ -321,10 +298,11 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools}
+\begin{frame}[fragile]{python tooling}
     \begin{verbatim}
-# setuptools on microsoft compilers doesn't support the --library-dir or
-# --build-dir flag and crashes, so only pass it on non-microsoft platforms
+# setuptools on microsoft compilers doesn't support
+# the --library-dir or --build-dir flag and crashes,
+# so only pass it on non-microsoft platforms
     \end{verbatim}
     \note{
         \begin{itemize}
@@ -337,8 +315,15 @@
                   pure python tend to be low-effort, buggy, \emph{works on my
                   machine} solutions
             \item At this point we give up
+            \item And feel like this
         \end{itemize}
     }
+\end{frame}
+
+\begin{frame}{}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{scream.jpg}
+    \end{center}
 \end{frame}
 
 \begin{frame}[fragile]{Building native code}
@@ -400,7 +385,7 @@
         \begin{itemize}
             \item The talk name did hint of a solution
             \item A lot of installed stuff is happy to hard-code path to python
-                exe + libs
+                  exe + libs
         \end{itemize}
     }
 \end{frame}
@@ -450,11 +435,23 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build}
+\begin{frame}[fragile]{scikit-build 1/4}
+    \lstinputlisting{my-package/scikit-build.py}
+
+    \note {
+        \begin{itemize}
+            \item It does support of a few scikit-build specific keys, like
+                  cmake-args, but other than that mostly just setuptools
+        \end{itemize}
+    }
+\end{frame}
+
+\begin{frame}[fragile]{scikit-build 2/4}
     \lstinputlisting{my-package/CMakeLists.txt}
 
     \note {
         \begin{itemize}
+            \item The PythonExtensions module is provided by scikit-build
             \item This is really it. It works quite well, and the maintainers
                   are helpful
             \item Ok, but let's pretend we want to also link against zlib
@@ -462,7 +459,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build}
+\begin{frame}[fragile]{scikit-build 3/4}
     \lstinputlisting{my-package/CMakeLists-zlib.txt}
     \note{
         \begin{itemize}
@@ -477,8 +474,8 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build}
-    \verb|python3 setup.py build -- -DZLIB_DIR=~/.local/share/zlib|
+\begin{frame}[fragile]{scikit-build 4/4}
+    \verb|python3 setup.py build -- -DZLIB_DIR=~/.local/zlib|
 
     \note {
         \begin{itemize}
@@ -491,7 +488,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{Intermezzo: cmake integration}
+\begin{frame}[fragile]{Intermezzo: cmake integration 1/2}
 
     \verb|mkdir build && cd build && cmake ..|
     \verb|make -j8 && ctest --output-on-failure|
@@ -508,7 +505,7 @@
 \end{frame}
 
 
-\begin{frame}[fragile]{Intermezzo: cmake integration}
+\begin{frame}[fragile]{Intermezzo: cmake integration 2/2}
     \begin{lstlisting}
 add_custom_target(
     dlisio-python ALL
@@ -533,23 +530,24 @@ add_dependencies(dlisio-python dlisio)
 
 \note{
     \begin{itemize}
-        \item This is taken from dlisio
-        \item If you're not familiar with cmake or custom targets, this might
-              be confusing, but it makes so the python lib behaves like any
-              other C++ lib from cmake's perspective
+        \item If you're not familiar with cmake or custom targets, it makes so
+              the python lib behaves like any other C++ lib
         \item Build in-place so that tests can be run directly on the source
-              tree
-        \item setuptools pollutes this directory anyway, so we're not
-              really that much worse off
+              tree - embrace python workflow
         \item Go the path of least resistance, even if it is ridiculous
         \item If you fight against the tool you simply won't win
-        \item Scikit-build builds for different python versions in different
-              dirs, so they coexist ok
-        \item setup.py tracks the python dependencies - the drawback is even
-              though there's nothing to do we still must run the seutp.py file.
-              This is somewhat slow, but an acceptable tradeoff
+        \item setuptools pollutes this directory anyway, so we're not
+              really that much worse off
+        \item setup.py tracks the python dependencies - setup.py is always run
+        \item Let's re-invent the wheel
     \end{itemize}
 }
+\end{frame}
+
+\begin{frame}{}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{reinvent-wheel.jpg}
+    \end{center}
 \end{frame}
 
 \begin{frame}[fragile]{Building wheels}
@@ -563,6 +561,8 @@ my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
 
     \note{
         \begin{itemize}
+            \item An ABI tag helps pip select the right package
+            \item pip resolves these names from the host system
             \item Notice the tag says linux. Not well suited for distribution
                   because users might have older libc
             \item For good binaries we need the manylinux tag
@@ -570,25 +570,15 @@ my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
     }
 \end{frame}
 
-\begin{frame}[fragile]
-    \begin{block}{}
-        \begin{itemize}
-            \item An ABI tag helps pip select the right package
-            \item pip resolves these names from the host system
-        \end{itemize}
-    \end{block}
-
-    \begin{block}{From PyPI}
-        \begin{verbatim}
+\begin{frame}[fragile]{Wheels from PyPI}
+    \begin{verbatim}
 segyio-1.8.6-cp37-cp37m-manylinux1_x86_64.whl (87.5 kB)
 segyio-1.8.6-cp37-cp37m-win32.whl (83.4 kB)
 segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
-        \end{verbatim}
-    \end{block}
+    \end{verbatim}
 
     \note{
         \begin{itemize}
-            \item \emph{Read list on screen}
             \item OS X was omitted because it's quite long, but follows the
                   same pattern
             \item The manylinux image is specified by the PyPA, basically the
@@ -599,21 +589,41 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 \end{frame}
 
 \begin{frame}
-    Problem: I have no machine running Windows
-\end{frame}
-
-\begin{frame}
-    Problem: I have no machine running Red Hat 5
-\end{frame}
-
-\begin{frame}{Build automation}
-    \begin{block}{Lesson}
-        Things not done automatically will not be done
+    \begin{block}{Problem}
+        I have no machine running Windows
     \end{block}
 \end{frame}
 
-\begin{frame}{Build automation}
-    machine definitions + scripts + triggers
+\begin{frame}
+    \begin{block}{Problem}
+        I have no machine running Red Hat 5
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Lesson}
+        Things not done automatically will not be done
+    \end{block}
+
+    \note {
+        In order to do things automatically for many systems, we need some
+        scaffolding
+    }
+\end{frame}
+
+\begin{frame}{Building multiple configurations}
+    \begin{center}
+    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
+    \end{center}
+    \note {
+        What are we \emph{really} talking about here?
+    }
+\end{frame}
+
+\begin{frame}
+    \begin{block}{}
+        machine definitions + scripts + triggers
+    \end{block}
     \note{
         \begin{itemize}
             \item A machine definition would be perfect for obsolete systems
@@ -637,12 +647,15 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
 
 \begin{frame}{Build-and-test PR 2/2}
     \includegraphics[width = \textwidth]{github-checks-passed.png}
-\end{frame}
 
-\begin{frame}{Build automation}
-    \begin{center}
-    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
-    \end{center}
+    \note {
+        \begin{itemize}
+            \item We outsource this work to third-party services
+            \item Travis, Circle, Appveyor, Gitlab, Pipelines
+            \item Mostly configured in yaml with custom keys
+            \item Fairly well documented
+        \end{itemize}
+    }
 \end{frame}
 
 \begin{frame}{Deploy}
@@ -689,16 +702,15 @@ deploy:
 \end{frame}
 
 \begin{frame}
-    Solution: distribute zlib with the wheel
+    \begin{block}{Solution}
+        Distribute zlib with the wheel
+    \end{block}
 
     \note {
-        \begin{itemize}
-            \item There's no zlib on the user machine
-        \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]
+\begin{frame}[fragile]{Auditwheel}
     \begin{block}{On Debian 10 (Buster)}
         \begin{lstlisting}
 $ auditwheel repair dist/my_project-0.0.1.whl
@@ -727,22 +739,25 @@ Archive:  wheelhouse/my_project-0.0.1.whl
         \begin{itemize}
             \item There's a similar tool for macos, delocate
             \item And there you have it
-            \item All that's left now is
+            \item To automate this on travis we use matthew-brett/multibuild
+            \item All that's left now is...
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]
+\begin{frame}[fragile]{}
     \verb|python3 -m pip install my-project|
 \end{frame}
 
 \begin{frame}
-    \begin{block}{Shoutouts}
-        \begin{description}
-            \item [scikit-build] Python and C++ build system
-            \item [multibuild] Matthew Brett's wheel building automation
-        \end{description}
-    \end{block}
+SUMMARY
+\end{frame}
+
+\begin{frame}{Shoutout}
+    \begin{description}
+        \item [scikit-build] Python and C++ build system
+        \item [multibuild] Matthew Brett's wheel building automation
+    \end{description}
 \end{frame}
 
 \end{document}
