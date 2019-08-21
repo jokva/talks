@@ -399,22 +399,16 @@
 
     \note{
         \begin{itemize}
-            \item Briefly, it automates building C++ with cmake, and automates
-                  dealing with python flags, layout, options.
+            \item Briefly, it automates building C++ with cmake
             \item It adresses most of the shortcomings with setuptools for
                   extensions
-            \item For distribution: feature autodiscovery, compiler config,
-                  dependency configuration etc
-            \item For development: easy debug/release builds, file-object
-                  dependency tracking, incremental builds
             \item Setuptools does what setuptools can (build python), cmake
                   does what cmake does
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{CMake}
-    cmake gives us:
+\begin{frame}[fragile]{CMake 1/2}
     \begin{itemize}
         \item \verb|find_package|
         \item \verb|target_link_libraries|
@@ -433,6 +427,17 @@
             \item cmake is pretty good at dealing with platform differences
         \end{itemize}
     }
+\end{frame}
+
+\begin{frame}{CMake 2/2}
+    \begin{itemize}
+        \item Feature autodiscovery
+        \item Compiler configuration
+        \item External dependency configuration
+        \item Easy debug/release builds
+        \item File-object dependency tracking
+        \item Incremental builds
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{scikit-build 1/4}
