@@ -331,7 +331,7 @@ my_math = setuptools.Extension('my_package.math',
     \end{minted}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
     \begin{minted}{python}
 def find_dakota_paths():
     """Assuming standard prefix-based install."""
@@ -343,7 +343,6 @@ def find_dakota_paths():
     if not all(map(os.path.exists, req)):
         exit("Can't find %s or %s or %s, bummer" % req)
     return dakota_install, dakota_bin, dakota_include, dakota_lib
-
     \end{minted}
 \end{frame}
 
@@ -851,6 +850,10 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
     \end{block}
 \end{frame}
 
+\begin{frame}
+    TODO: CI
+\end{frame}
+
 \begin{frame}[fragile]
     \begin{minted}{yaml}
 deploy:
@@ -895,8 +898,8 @@ deploy:
     \end{description}
 \end{frame}
 
-\begin{frame}
-    Questions?
+\begin{frame}{Thank you}
+    \includegraphics[width = \textwidth]{porcorosso.jpg}
 \end{frame}
 
 \end{document}
