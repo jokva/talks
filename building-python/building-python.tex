@@ -32,12 +32,9 @@
 \RequirePackage{dirtree}
 \RequirePackage{csquotes}
 
-\RequirePackage{listings}
-% use monospaced fonts in listings
-\lstset{%
-    basicstyle=\ttfamily\scriptsize,
-}
-\RequirePackage{color}
+\RequirePackage{minted}
+\setminted{fontsize=\scriptsize}
+
 
 \mode<presentation>{}
 
@@ -96,7 +93,7 @@
             \item Pure python is what we want out downstream users to do
             \item Impure python is almost indistinguishable from pure python:
                   Numpy and chunks of the python standard library are good
-                  examples.
+                  examples
             \item Thin wrappers rely on some system provided library and
                   provide an entry point from Python. Fire, wait, and parse the
                   output
@@ -106,7 +103,7 @@
                   python is that numpy's backend is only available in python,
                   contrary to say python-BLAS
         \end{itemize}
-        We'll focus on impure and fat library.
+        We'll focus on impure and fat library
     }
 \end{frame}
 
@@ -180,7 +177,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-    \begin{verbatim}
+    \begin{minted}{bash}
 $ python3 setup.py bdist_wheel
 $ unzip -l dist/my_project-0.0.1-py3-none-any.whl
 my_package/__init__.py
@@ -191,7 +188,7 @@ my_project-0.0.1.dist-info/METADATA
 my_project-0.0.1.dist-info/WHEEL
 my_project-0.0.1.dist-info/top_level.txt
 my_project-0.0.1.dist-info/RECORD
-    \end{verbatim}
+    \end{minted}
 \end{frame}
 
 \begin{frame}
@@ -253,8 +250,9 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
+\section{Using setuptools}
 \begin{frame}[fragile]
-    \lstinputlisting{my-package/setuptools-pure.py}
+    \inputminted{python}{my-package/setuptools-pure.py}
 
     \note{
         \begin{itemize}
@@ -268,19 +266,19 @@ my_project-0.0.1.dist-info/RECORD
 \end{frame}
 
 \begin{frame}[fragile]
-    \lstinputlisting{my-package/my_package/math/math.c}
+    \inputminted[highlightlines=11]{python}{my-package/setuptools-ext.py}
 \end{frame}
 
 \begin{frame}[fragile]
-    \lstinputlisting{my-package/setuptools-ext.py}
+    \inputminted{c}{my-package/my_package/math/math.c}
 \end{frame}
 
 \begin{frame}[fragile]{}
-    \begin{lstlisting}
+    \begin{minted}{python}
 >>> import my_package
 >>> my_package.math.add(1, 2)
 3
-    \end{lstlisting}
+    \end{minted}
     \note {
         \begin{itemize}
             \item This extension is, of course, trivial
@@ -289,8 +287,11 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{my-package extension 2/2}
-    \lstinputlisting{my-package/my_package/math/math11.cpp}
+\begin{frame}[fragile]
+    \inputminted[
+        highlightlines={3,6}
+    ]{c++}{my-package/my_package/math/math11.cpp}
+
     \note{
         \begin{itemize}
             \item This now fails on gcc < 6.0, because C++98 was still the
@@ -300,8 +301,8 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools 3/3}
-    \lstinputlisting{my-package/setuptools-ext11.py}
+\begin{frame}[fragile]
+    \inputminted{python}{my-package/setuptools-ext11.py}
 
     \note{
         \begin{itemize}
@@ -317,47 +318,60 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{python tooling}
-    \begin{verbatim}
-# setuptools on microsoft compilers doesn't support
-# the --library-dir or --build-dir flag and crashes,
-# so only pass it on non-microsoft platforms
-    \end{verbatim}
-    \note{
-        \begin{itemize}
-            \item This is a snippet from our project segyio
-            \item setuptools actually \emph{crashed} on being given
-                  --library-dirs
-            \item Ok, so maybe not pass it when you're sitting on windows, but
-                  what about when this is in scripts
-            \item Honestly, setup.py-files that do more than setup() and are
-                  pure python tend to be low-effort, buggy, \emph{works on my
-                  machine} solutions
-            \item At this point we give up
-            \item And feel like this
-        \end{itemize}
-    }
+\begin{frame}[fragile]
+    \begin{minted}{python}
+extra_compile_args = []
+if 'win' not in sys.platform:
+    extra_compile_args.append('-std=c++11')
+
+my_math = setuptools.Extension('my_package.math',
+    sources = ['my_package/math/math11.cpp'],
+    extra_compile_args = extra_compile_args,
+)
+    \end{minted}
 \end{frame}
 
-\begin{frame}{}
+\begin{frame}[fragile]
+    \begin{minted}{bash}
+$ python3 setup.py build_ext --help
+
+Options for build_ext command:
+    --library-dirs (-L)  directories to search for external C libraries
+                         (separated by ':')
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{mechazawa-sad.jpg}
+    \end{center}
+\end{frame}
+
+\begin{frame}
     \begin{center}
         \includegraphics[height = 0.8\textheight]{scream.jpg}
     \end{center}
 \end{frame}
 
-\begin{frame}[fragile]{Building native code}
-    The struggle of binary libraries
+\section{And then things got worse ...}
 
+\begin{frame}{The struggle of binary libraries}
     \begin{itemize}
-        \item Multiple compilers with different flags
+        \item Compiler options
         \item Compiler versions
-        \item Multiple available compilers
+        \item Choosing the right compiler
         \item Platform-specific options
-        \item Configuration-specific options, e.g. \verb|USE_BLAS|
-        \item Feature detection
-        \item Build and runtime dependencies
         \item Binary compatibility
     \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{The struggle of binary libraries}
+    \begin{description}
+        \item [Configuration-specific] \verb|USE_BLAS|
+        \item [Header detection] \verb|#include| sys/inet.h or winsock.h
+        \item [Dependencies] Build time
+        \item [Dependencies] Runtime
+    \end{description}
 
     \note{
         \emph{Read list}
@@ -375,15 +389,29 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}{Developing native code}
-    \begin{itemize}
-        \item Changes in headers aren't detected, and the module isn't
-              recompiled - not great with templates
-        \item Designed for distribution, not development
-        \item Setuptools assumes it controls the world, so it pollutes source
-              trees. Not cool when python support is a sub project
-    \end{itemize}
+\begin{frame}
+    \inputminted{c++}{my-package/template-div1.cpp}
+\end{frame}
 
+\begin{frame}[fragile]
+    \begin{minted}{python}
+>>> my_package.math.div(4, 2)
+1
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}{python}
+>>> my_package.math.div(2, 0)
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \inputminted{c++}{my-package/template-div2.cpp}
+\end{frame}
+
+\begin{frame}[fragile]
+    \verb|$ python3 setup.py build|
     \note{
         \begin{itemize}
             \item Overall, setuptools does a poor job of tracking file ->
@@ -409,7 +437,9 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}{Enter scikit-build}
+\section{A new tomorrow}
+
+\begin{frame}
     \begin{displayquote}
         The scikit-build package is fundamentally just glue between the
         setuptools Python module and CMake
@@ -427,7 +457,7 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{CMake 1/2}
+\begin{frame}[fragile]
     \begin{itemize}
         \item \verb|find_package|
         \item \verb|target_link_libraries|
@@ -448,19 +478,26 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}{CMake 2/2}
+\begin{frame}
     \begin{itemize}
-        \item Feature autodiscovery
-        \item Compiler configuration
-        \item External dependency configuration
-        \item Easy debug/release builds
-        \item File-object dependency tracking
-        \item Incremental builds
+        \item Configuration-specific configuration
+        \item Header detection
+        \item Dependencies build time
+        \item Dependencies runtime
     \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build 1/4}
-    \lstinputlisting{my-package/scikit-build.py}
+\begin{frame}[fragile]
+    \begin{tabular}{l l}
+        Configuration-specific  & \verb|if (BUILD_PYTHON)| \\
+        Header detection        & \verb|check_include_file(sys/stat.h)| \\
+        Build                   & \verb|find_package(FLEX)| \\
+        Runtime                 & \verb|target_link_libraries(lib)| \\
+    \end{tabular}
+\end{frame}
+
+\begin{frame}[fragile]
+    \inputminted{python}{my-package/scikit-build.py}
 
     \note {
         \begin{itemize}
@@ -470,8 +507,8 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build 2/4}
-    \lstinputlisting{my-package/CMakeLists.txt}
+\begin{frame}[fragile]
+    \inputminted{cmake}{my-package/CMakeLists.txt}
 
     \note {
         \begin{itemize}
@@ -483,8 +520,8 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build 3/4}
-    \lstinputlisting{my-package/CMakeLists-zlib.txt}
+\begin{frame}[fragile]
+    \inputminted[highlightlines={6, 10}]{cmake}{my-package/CMakeLists-zlib.txt}
     \note{
         \begin{itemize}
             \item All we had to do was find-package and target-link-libraries
@@ -498,7 +535,7 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{scikit-build 4/4}
+\begin{frame}[fragile]
     \verb|python3 setup.py build -- -DZLIB_DIR=~/.local/zlib|
 
     \note {
@@ -512,10 +549,15 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
-\begin{frame}[fragile]{Intermezzo: cmake integration 1/2}
+\begin{frame}
+    \inputminted{c++}{my-package/template-div2.cpp}
+\end{frame}
+
+\section{Intermezzo: cmake integration}
+\begin{frame}[fragile]
 
     \verb|mkdir build && cd build && cmake ..|
-    \verb|make -j8 && ctest --output-on-failure|
+    \verb|make && ctest --output-on-failure|
 
     \note{
         \begin{itemize}
@@ -528,29 +570,46 @@ my_project-0.0.1.dist-info/RECORD
     }
 \end{frame}
 
+\begin{frame}
+    Avoid double bookkeeping
+\end{frame}
 
-\begin{frame}[fragile]{Intermezzo: cmake integration 2/2}
-    \begin{lstlisting}
-add_custom_target(
-    dlisio-python ALL
-    SOURCES ${setup.py}
-    DEPENDS ${setup.py}
-    VERBATIM
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND ${python} ${setup.py}
-        build_ext --inplace
-        build # setup.py build args
-            --cmake-executable ${CMAKE_COMMAND}
-            --generator ${CMAKE_GENERATOR}
-            ${DLISIO_PYTHON_BUILD_TYPE}
-        -- # scikit-build cmake args
-            -Ddlisio_DIR=${DLISIO_LIB_BINARY_DIR}
-            -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
-            -DCMAKE_INSTALL_RPATH=$<TARGET_FILE_DIR:dlisio>
-            -DCMAKE_INSTALL_NAME_DIR=$<TARGET_FILE_DIR:dlisio>
-)
-add_dependencies(dlisio-python dlisio)
-    \end{lstlisting}
+\begin{frame}
+    \dirtree{%
+        .1 project/.
+        .2 CMakeLists.txt.
+        .2 core/.
+        .3 CMakeLists.txt.
+        .3 core.cpp.
+        .2 python/.
+        .3 CMakeLists.txt.
+        .3 setup.py.
+        .3 my-package/.
+        .2 haskell/.
+        .3 CMakeLists.txt.
+        .3 core.hs.
+    }
+\end{frame}
+
+\begin{frame}
+    \dirtree{%
+        .1 project/.
+        .2 CMakeLists.txt.
+        .2 core/.
+        .3 CMakeLists.txt.
+        .3 core.cpp.
+        .2 python/.
+        .3 {\color{red}{CMakeLists.txt}}.
+        .3 setup.py.
+        .3 my-package/.
+        .2 haskell/.
+        .3 CMakeLists.txt.
+        .3 core.hs.
+    }
+\end{frame}
+
+\begin{frame}[fragile]
+    \inputminted{cmake}{my-package/custom-target.cmake}
 
 \note{
     \begin{itemize}
@@ -568,64 +627,30 @@ add_dependencies(dlisio-python dlisio)
 }
 \end{frame}
 
-\begin{frame}{}
+\begin{frame}
     \begin{center}
-        \includegraphics[height = 0.8\textheight]{reinvent-wheel.jpg}
+    \includegraphics[height = 0.8\textheight]{olympic-titanic.jpg}
     \end{center}
-\end{frame}
-
-\begin{frame}[fragile]{Building wheels}
-    \begin{block}{On Debian 10 (Buster)}
-        \begin{verbatim}
-$ python3 setup.py bdist_wheel
-$ ls dist/
-my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
-        \end{verbatim}
-    \end{block}
-
-    \note{
-        \begin{itemize}
-            \item An ABI tag helps pip select the right package
-            \item pip resolves these names from the host system
-            \item Notice the tag says linux. Not well suited for distribution
-                  because users might have older libc
-            \item For good binaries we need the manylinux tag
-        \end{itemize}
+    \note {
+        What are we \emph{really} talking about here?
     }
 \end{frame}
 
-\begin{frame}[fragile]{Wheels from PyPI}
-    \begin{verbatim}
-segyio-1.8.6-cp37-cp37m-manylinux1_x86_64.whl (87.5 kB)
-segyio-1.8.6-cp37-cp37m-win32.whl (83.4 kB)
-segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
-    \end{verbatim}
+\section{Build everything}
 
-    \note{
-        \begin{itemize}
-            \item OS X was omitted because it's quite long, but follows the
-                  same pattern
-            \item The manylinux image is specified by the PyPA, basically the
-                  oldest libc + supporting libs they could use (RHEL5)
-            \item Windows packages built on Windows, linux on RHEL5 etc.
-        \end{itemize}
-    }
+\begin{frame}[fragile]
+    \begin{description}
+        \item [Building] \verb|python3 setup.py build|
+        \item [Testing]  \verb|python3 setup.py test|
+    \end{description}
+\end{frame}
+
+\begin{frame}[fragile]
+    \verb|python3 setup.py test| is still too manual
 \end{frame}
 
 \begin{frame}
-    \begin{block}{Problem}
-        I have no machine running Windows
-    \end{block}
-\end{frame}
-
-\begin{frame}
-    \begin{block}{Problem}
-        I have no machine running Red Hat 5
-    \end{block}
-\end{frame}
-
-\begin{frame}
-    \begin{block}{Lesson}
+    \begin{block}{Lesson learned}
         Things not done automatically will not be done
     \end{block}
 
@@ -635,19 +660,25 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
     }
 \end{frame}
 
-\begin{frame}{Building multiple configurations}
-    \begin{center}
-    \includegraphics[keepaspectratio, height = 0.8\textheight]{olympic-titanic.jpg}
-    \end{center}
-    \note {
-        What are we \emph{really} talking about here?
-    }
+\begin{frame}[fragile]{travis.yml}
+    \inputminted[lastline=12]{yaml}{travis.yml}
+\end{frame}
+
+\begin{frame}[fragile]{travis.yml}
+    \inputminted[firstline=16,lastline=25]{yaml}{travis.yml}
+\end{frame}
+
+\begin{frame}[fragile]{travis.yml}
+    \inputminted[firstline=27]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}
-    \begin{block}{}
-        machine definitions + scripts + triggers
-    \end{block}
+    \begin{tabular}{l l}
+        Machine definition  & Service default + config \\
+        Scripts             & Config, setup.py, cmake \\
+        Triggers            & New HEAD \\
+    \end{tabular}
+
     \note{
         \begin{itemize}
             \item A machine definition would be perfect for obsolete systems
@@ -665,11 +696,7 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
     }
 \end{frame}
 
-\begin{frame}{Build-and-test PR 1/2}
-    \includegraphics[width = \textwidth]{github-green-checkmark.png}
-\end{frame}
-
-\begin{frame}{Build-and-test PR 2/2}
+\begin{frame}
     \includegraphics[width = \textwidth]{github-checks-passed.png}
 
     \note {
@@ -682,42 +709,64 @@ segyio-1.8.6-cp37-cp37m-win_amd64.whl (89.7 kB)
     }
 \end{frame}
 
-\begin{frame}{Deploy}
-    \includegraphics[width = \textwidth]{travis-dlisio-jobs.png}
-    \note {
+\begin{frame}{}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{reinvent-wheel.jpg}
+    \end{center}
+\end{frame}
+
+\section{Reinventing the wheel}
+
+\begin{frame}[fragile]
+    \begin{block}{Wheel naming}
+        \verb|{name}-{version}(-{build})?-{python}-{abi}-{plat}.whl|
+    \end{block}
+
+    \note{
         \begin{itemize}
-            \item I mentioned a trigger was a tag
-            \item On tags, our deploy logic is run, which as its final step
-                  uploads the freshly-built wheels
-            \item This means the released archives are never built on developer
-                  machines
-            \item And we have a one-click deploy feature in place
-            \item It's great for velocity, and it means \emph{any} team member
-                  can deploy new releases
+            \item An ABI tag helps pip select the right package
+            \item pip resolves these names from the host system
         \end{itemize}
     }
 \end{frame}
 
-\begin{frame}[fragile]{Deploy}
-    \begin{lstlisting}
-deploy:
-    - provider: pypi
-      skip_cleanup: true
-      skip_upload_docs: true
-      skip_existing: true
-      user: statoil-travis
-      distributions: --skip-cmake build sdist
-      password:
-        secure: encrypted-key
-      on:
-        tags: true
-    \end{lstlisting}
+\begin{frame}[fragile]
+    \begin{block}{On Debian 10 (Buster)}
+        \begin{minted}{bash}
+$ python3 setup.py bdist_wheel
+$ unzip -l dist/my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
+my_package/__init__.py
+my_package/core.py
+my_package/math.cpython-37m-x86_64-linux-gnu.so
+my_project-0.0.1.dist-info/LICENSE
+my_project-0.0.1.dist-info/METADATA
+my_project-0.0.1.dist-info/WHEEL
+my_project-0.0.1.dist-info/top_level.txt
+my_project-0.0.1.dist-info/RECORD
+        \end{minted}
+    \end{block}
+
+    \note{
+        \begin{itemize}
+            \item Notice the tag says linux. Not well suited for distribution
+                  because users might have older libc
+            \item For good binaries we need the manylinux tag
+            \item OS X was omitted because it's quite long, but follows the
+                  same pattern
+            \item The manylinux image is specified by the PyPA, basically the
+                  oldest libc + supporting libs they could use (RHEL5)
+            \item Windows packages built on Windows, linux on RHEL5 etc
+        \end{itemize}
+    }
 \end{frame}
 
 \begin{frame}
+    \begin{block}{Problem}
+        No zlib on the user machine
+    \end{block}
+
     \note {
         \begin{itemize}
-            \item There's no zlib on the user machine
             \item We'd still like the pip-package to \emph{just work}
             \item In particular an issue for fat wrappers around not-always
                   distributed libraries
@@ -729,64 +778,109 @@ deploy:
     \begin{block}{Solution}
         Distribute zlib with the wheel
     \end{block}
-
-    \note {
-    }
 \end{frame}
 
-\begin{frame}[fragile]{Auditwheel}
-    \begin{block}{On Debian 10 (Buster)}
-        \begin{lstlisting}
-$ auditwheel repair dist/my_project-0.0.1.whl
-Fixed-up wheel written to wheelhouse/my_project-0.0.1.whl
-$ unzip -l wheelhouse/my_project-0.0.1.whl
-Archive:  wheelhouse/my_project-0.0.1.whl
-  Length   Name
----------  ----
-       19  my_package/__init__.py
-        0  my_package/core.py
-    34432  my_package/math.cpython-35m-x86_64-linux-gnu.so
-  2646632  my_package/.libs/libstdc++-4376550d.so.6.0.22
-  3820672  my_package/.libs/libc-2-d37be6b0.24.so
-  1072968  my_package/.libs/libm-2-bfba5a97.24.so
-   101072  my_package/.libs/libgcc_s-41124e5d.so.1
-   112496  my_package/.libs/libz-7fd423a0.so.1.2.8
-     1072  my_project-0.0.1.dist-info/RECORD
-       11  my_project-0.0.1.dist-info/top_level.txt
-      173  my_project-0.0.1.dist-info/METADATA
-       98  my_project-0.0.1.dist-info/WHEEL
----------  --------
-  7789645  12 files
-        \end{lstlisting}
+\begin{frame}[fragile]
+    \begin{minted}[highlightlines={7-11}]{bash}
+$ auditwheel repair dist/my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
+Fixed-up wheel written to wheelhouse/
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}[highlightlines={5-9}]{bash}
+$ unzip -l wheelhouse/my_project-0.0.1-cp37-cp37m-linux_x86_64.whl
+my_package/__init__.py
+my_package/core.py
+my_package/math.cpython-35m-x86_64-linux-gnu.so
+my_package/.libs/libstdc++-4376550d.so.6.0.22
+my_package/.libs/libc-2-d37be6b0.24.so
+my_package/.libs/libm-2-bfba5a97.24.so
+my_package/.libs/libgcc_s-41124e5d.so.1
+my_package/.libs/libz-7fd423a0.so.1.2.8
+my_project-0.0.1.dist-info/RECORD
+my_project-0.0.1.dist-info/top_level.txt
+my_project-0.0.1.dist-info/METADATA
+my_project-0.0.1.dist-info/WHEEL
+    \end{minted}
+\end{frame}
+
+\section{It wasn't me}
+
+\begin{frame}
+    \begin{block}{Problem}
+        Binary incompatibility - still not redistributable
     \end{block}
-    \note {
-        \begin{itemize}
-            \item There's a similar tool for macos, delocate
-            \item And there you have it
-            \item To automate this on travis we use matthew-brett/multibuild
-            \item All that's left now is...
-        \end{itemize}
-    }
 \end{frame}
 
-\begin{frame}[fragile]{}
+\begin{frame}[fragile]
+    \begin{block}{On Red Hat 5}
+        \begin{minted}{bash}
+$ python3 setup.py bdist_wheel
+$ ls dist/
+my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
+        \end{minted}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Problem}
+        No machine running Windows
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Problem}
+        No machine running Red Hat 5
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}{yaml}
+deploy:
+    - provider: pypi
+      skip_cleanup: true
+      skip_upload_docs: true
+      skip_existing: true
+      user: statoil-travis
+      distributions: --skip-cmake build sdist
+      password:
+        secure: encrypted-key
+      on:
+        tags: true
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
     \verb|python3 -m pip install my-project|
 \end{frame}
 
-\begin{frame}{We have learned how to}
+\begin{frame}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{mechazawa-dist.png}
+    \end{center}
+\end{frame}
+
+\section{Summary}
+
+\begin{frame}
     \begin{itemize}
-        \item Create a new package
-        \item Build extensions on multiple platforms
-        \item Assemble wheels with bundled dependencies
-        \item Automatically test and publish packages
+        \item Created a package
+        \item Built extension on multiple platforms
+        \item Assembled wheel with bundled dependencies
+        \item Automatically tested and published package
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Shoutout}
     \begin{description}
-        \item [scikit-build] Python and C++ build system
-        \item [multibuild] Matthew Brett's wheel building automation
+        \item [scikit-build] Setuptools-CMake glue
+        \item [multibuild] Wheel automation
     \end{description}
+\end{frame}
+
+\begin{frame}
+    Questions?
 \end{frame}
 
 \end{document}

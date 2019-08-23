@@ -5,7 +5,7 @@ LATEXMK := latexmk
 all: slides
 
 slides:
-	$(LATEXMK) -pdf building-python
+	$(LATEXMK) -e '$$pdflatex=q/pdflatex %O -shell-escape %S/' -pdf building-python
 
 clean:
 	$(LATEXMK) -C building-python

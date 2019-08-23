@@ -1,0 +1,42 @@
+os: osx
+
+env:
+    global:
+        - UNICODE_WIDTH=32
+        - PLAT=x86_64
+    matrix:
+        - MB_PYTHON_VERSION=2.7
+        - MB_PYTHON_VERSION=3.5
+        - MB_PYTHON_VERSION=3.6
+        - MB_PYTHON_VERSION=3.7
+
+matrix:
+    fast_finish: true
+
+before_install:
+    - git clone https://github.com/matthew-brett/multibuild
+    - source multibuild/common_utils.sh
+    - source multibuild/travis_steps.sh
+    - before_install
+
+install:
+    - pip install -r python/requirements-dev.txt
+    - pip install bandit
+    - bandit -c bandit.yml -r python/
+
+before_script:
+    - mkdir build && pushd build
+    - cmake -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_INSTALL_NAME_DIR=/usr/local/lib
+            ..
+    - popd
+
+script:
+    - pushd build
+    - make && ctest --output-on-failure
+    - sudo make install
+    - popd
+    - sudo rm -rf python/_skbuild
+    - build_wheel python $PLAT
+    - install_run $PLAT
