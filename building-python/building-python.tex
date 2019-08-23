@@ -6,7 +6,7 @@
 
 % for speaker notes etc
 \RequirePackage{pgfpages}
-\setbeameroption{show notes on second screen}
+%\setbeameroption{show notes on second screen}
 %\setbeameroption{show only notes}
 \setbeamercolor{note page}{bg=white}
 \setbeamercolor{note title}{bg=white!90!black, fg=black}
@@ -34,7 +34,10 @@
 
 \RequirePackage{listings}
 % use monospaced fonts in listings
-\lstset{basicstyle=\ttfamily\scriptsize}
+\lstset{%
+    basicstyle=\ttfamily\scriptsize,
+}
+\RequirePackage{color}
 
 \mode<presentation>{}
 
@@ -60,10 +63,30 @@
     \end{itemize}
 }
 
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \includegraphics[keepaspectratio, height = 0.8\textheight]{Mechazawa.png}
+    \end{center}
+\end{frame}
+
+\section{Kinds}
+\begin{frame}
+    python3 -m pip install my-project
+
+    \note {
+        This is the only end-user code in this talk. The rest is of it is all
+        developer centric
+    }
+\end{frame}
+
 \begin{frame}{Kinds of Python}
     \begin{itemize}
         \item Pure python
-        \item Impure Python (non-python code behind CPython API)
+        \item Impure python (non-python backend)
         \item Thin library wrappers
         \item Fat library wrappers
     \end{itemize}
@@ -87,23 +110,18 @@
     }
 \end{frame}
 
-\begin{frame}{A goal}
-    python3 -m pip install my-project
-
-    \note {
-        This is the only end-user code in this talk. The rest is of it is all
-        developer centric
-    }
+\begin{frame}
+    \begin{block}{}
+        What does pip install do?
+    \end{block}
 \end{frame}
 
-\begin{frame}{pip install}
-    What does pip install do?
-
+\begin{frame}
     \begin{enumerate}
         \item Looks up the package name in an \emph{index}
-        \item Determines if the package is installable on this system
+        \item Determines if the package is installable
         \item Fetches the package
-        \item Extracts the contents to the right site-package directory
+        \item Extracts the package site-packages/
     \end{enumerate}
 \end{frame}
 
@@ -116,8 +134,9 @@
     }
 \end{frame}
 
-\begin{frame}{\emph{Building} interpreted packages 1/2}
-    Python packages are just source code, parsed and interpreted on-the-fly
+\section{What's in a package?}
+\begin{frame}
+    Python is interpreted on the fly
 
     \note{
         \begin{itemize}
@@ -129,14 +148,14 @@
     }
 \end{frame}
 
-\begin{frame}{Directory layout 1/2}
+\begin{frame}{Mechazawa's project}
     \dirtree{%
         .1 project/.
         .2 README.rst.
         .2 LICENSE.
         .2 setup.py.
         .2 requirements.txt.
-        .2 package/.
+        .2 my-package/.
         .3 {\_\_}init{\_\_}.py.
         .3 core.py.
         .3 helpers.py.
@@ -147,8 +166,6 @@
         .3 test{\_}basic.py.
         .3 test{\_}advanced.py.
     }
-
-    {\tiny https://www.kennethreitz.org/essays/repository-structure-and-python}
 
     {\tiny https://docs.python-guide.org/writing/structure}
     \note{
@@ -162,7 +179,22 @@
     }
 \end{frame}
 
-\begin{frame}{Directory layout 2/2}
+\begin{frame}[fragile]
+    \begin{verbatim}
+$ python3 setup.py bdist_wheel
+$ unzip -l dist/my_project-0.0.1-py3-none-any.whl
+my_package/__init__.py
+my_package/core.py
+my_package/helpers.py
+my_project-0.0.1.dist-info/LICENSE
+my_project-0.0.1.dist-info/METADATA
+my_project-0.0.1.dist-info/WHEEL
+my_project-0.0.1.dist-info/top_level.txt
+my_project-0.0.1.dist-info/RECORD
+    \end{verbatim}
+\end{frame}
+
+\begin{frame}
     \dirtree{%
         .1 site-packages/.
         .2 my-package/.
@@ -182,22 +214,7 @@
     }
 \end{frame}
 
-\begin{frame}{\emph{Building} interpreted packages 2/2}
-    \begin{block}{Building a package}
-        The transformation of a source tree to a format ready for user
-        consumption
-    \end{block}
-
-    \note{
-        \begin{itemize}
-            \item For this, \emph{if} you conform to a common project layout,
-                  python tooling works reasonably well
-            \item How did we get here?
-        \end{itemize}
-    }
-\end{frame}
-
-\begin{frame}{Some history 1/2}
+\begin{frame}
     \includegraphics[width=\textwidth]{pantheon.jpeg}
     \note{
         \begin{itemize}
@@ -207,12 +224,14 @@
     }
 \end{frame}
 
-\begin{frame}{Some history 2/2}
+\section{History}
+\begin{frame}
     \begin{description}
         \item [Late 90s] Python wanted something like CPAN
         \item [2000] Distutils released for Python 1.6 standard library
         \item [2003] PyPI is online, distutils can create package metadata
-        \item [2008] Setuptools extends and supersedes distutils, pip builds on it
+        \item [2008] Setuptools extends and replaces distutils
+        \item [2008] pip builds on setuptool
     \end{description}
 
     \note{
@@ -234,7 +253,7 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{setuptools 1/3}
+\begin{frame}[fragile]
     \lstinputlisting{my-package/setuptools-pure.py}
 
     \note{
@@ -248,11 +267,11 @@
     }
 \end{frame}
 
-\begin{frame}[fragile]{my-package extension 1/2}
+\begin{frame}[fragile]
     \lstinputlisting{my-package/my_package/math/math.c}
 \end{frame}
 
-\begin{frame}[fragile]{setuptools 2/3}
+\begin{frame}[fragile]
     \lstinputlisting{my-package/setuptools-ext.py}
 \end{frame}
 
