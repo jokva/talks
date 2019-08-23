@@ -11,7 +11,7 @@ clean:
 	$(LATEXMK) -C building-python
 	rm -rf _minted-building-python
 	rm -f building-python.nav building-python.snm building-python.vrb
-	rm -f equinor-red-eps-converted-to.pdf
+	rm -f img/equinor-red-eps-converted-to.pdf
 
 deps:
 	apt-get install latexmk texlive-latex-extra texlive-science texlive-font-utils
