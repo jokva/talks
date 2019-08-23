@@ -331,6 +331,22 @@ my_math = setuptools.Extension('my_package.math',
     \end{minted}
 \end{frame}
 
+\begin{frame}
+    \begin{minted}{python}
+def find_dakota_paths():
+    """Assuming standard prefix-based install."""
+    dakota_install = os.path.dirname(os.path.dirname(DAKOTA_EXEC))
+    dakota_bin = os.path.join(dakota_install, 'bin')
+    dakota_include = os.path.join(dakota_install, 'include')
+    dakota_lib = os.path.join(dakota_install, 'lib')
+    req = (dakota_bin, dakota_include, dakota_lib)
+    if not all(map(os.path.exists, req)):
+        exit("Can't find %s or %s or %s, bummer" % req)
+    return dakota_install, dakota_bin, dakota_include, dakota_lib
+
+    \end{minted}
+\end{frame}
+
 \begin{frame}[fragile]
     \begin{minted}{bash}
 $ python3 setup.py build_ext --help
