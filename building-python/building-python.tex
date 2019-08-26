@@ -15,12 +15,8 @@
 \beamertemplatenavigationsymbolsempty
 \AtBeginSection[]{
     \begin{frame}
-        \vfill
-        \centering
-        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
-            \usebeamerfont{title}\insertsectionhead\par%
-        \end{beamercolorbox}
-        \vfill
+        \frametitle{Table of Contents}
+        \tableofcontents[currentsection]
     \end{frame}
 }
 
@@ -70,7 +66,7 @@
     \end{center}
 \end{frame}
 
-\section{Kinds}
+\section{pip install}
 \begin{frame}
     python3 -m pip install my-project
 
@@ -80,7 +76,7 @@
     }
 \end{frame}
 
-\begin{frame}{Kinds of Python}
+\begin{frame}
     \begin{itemize}
         \item Pure python
         \item Impure python (non-python backend)
@@ -651,7 +647,7 @@ Options for build_ext command:
     }
 \end{frame}
 
-\section{Build everything}
+\section{Above the clouds}
 
 \begin{frame}[fragile]
     \begin{description}
@@ -851,7 +847,7 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 \end{frame}
 
 \begin{frame}
-    TODO: CI
+    TODO: CI + multibuild
 \end{frame}
 
 \begin{frame}[fragile]
@@ -861,7 +857,7 @@ deploy:
       skip_cleanup: true
       skip_upload_docs: true
       skip_existing: true
-      user: statoil-travis
+      user: mechazawa
       distributions: --skip-cmake build sdist
       password:
         secure: encrypted-key
@@ -880,7 +876,7 @@ deploy:
     \end{center}
 \end{frame}
 
-\section{Summary}
+\section{Looking back}
 
 \begin{frame}
     \begin{itemize}
