@@ -672,22 +672,22 @@ Options for build_ext command:
 \end{frame}
 
 \begin{frame}[fragile]{travis.yml}
-    \inputminted[lastline=12]{yaml}{travis.yml}
+    \inputminted[lastline = 12]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}[fragile]{travis.yml}
-    \inputminted[firstline=16,lastline=25]{yaml}{travis.yml}
+    \inputminted[firstline = 16, lastline = 25]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}[fragile]{travis.yml}
-    \inputminted[firstline=27]{yaml}{travis.yml}
+    \inputminted[firstline = 27, lastline = 42]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}
     \begin{tabular}{l l}
-        Machine definition  & Service default + config \\
+        Machine definition  & Service default, config \\
         Scripts             & Config, setup.py, cmake \\
-        Triggers            & New HEAD \\
+        Triggers            & New HEAD, tags \\
     \end{tabular}
 
     \note{
@@ -847,23 +847,11 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 \end{frame}
 
 \begin{frame}
-    TODO: CI + multibuild
+    \inputminted[firstline = 16, lastline = 20]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}[fragile]
-    \begin{minted}{yaml}
-deploy:
-    - provider: pypi
-      skip_cleanup: true
-      skip_upload_docs: true
-      skip_existing: true
-      user: mechazawa
-      distributions: --skip-cmake build sdist
-      password:
-        secure: encrypted-key
-      on:
-        tags: true
-    \end{minted}
+    \inputminted[firstline = 44, lastline = 54]{yaml}{travis.yml}
 \end{frame}
 
 \begin{frame}[fragile]

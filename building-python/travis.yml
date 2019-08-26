@@ -40,3 +40,15 @@ script:
     - sudo rm -rf python/_skbuild
     - build_wheel python $PLAT
     - install_run $PLAT
+
+deploy:
+    - provider: pypi
+      skip_cleanup: true
+      skip_upload_docs: true
+      skip_existing: true
+      user: mechazawa
+      distributions: --skip-cmake build sdist
+      password:
+        secure: encrypted-key
+      on:
+        tags: true
