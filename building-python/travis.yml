@@ -25,27 +25,19 @@ install:
     - bandit -c bandit.yml -r python/
 
 before_script:
-    - mkdir build && pushd build
     - cmake -DBUILD_SHARED_LIBS=ON
             -DCMAKE_BUILD_TYPE=Release
             -DCMAKE_INSTALL_NAME_DIR=/usr/local/lib
             ..
-    - popd
 
 script:
-    - pushd build
     - make && ctest --output-on-failure
-    - sudo make install
-    - popd
-    - sudo rm -rf python/_skbuild
+    - make install
     - build_wheel python $PLAT
     - install_run $PLAT
 
 deploy:
     - provider: pypi
-      skip_cleanup: true
-      skip_upload_docs: true
-      skip_existing: true
       user: mechazawa
       distributions: --skip-cmake build sdist
       password:

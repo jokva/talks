@@ -20,11 +20,6 @@
     \end{frame}
 }
 
-\RequirePackage{listings}
-\lstset{escapeinside={<@}{@>}}
-\lstset{basicstyle=\ttfamily}
-\lstset{moredelim=**[is][\color{red}]{@}{@}}
-
 \RequirePackage{dirtree}
 \RequirePackage{csquotes}
 
@@ -56,24 +51,38 @@
     \end{itemize}
 }
 
-\begin{frame}{Outline}
-    \tableofcontents
-\end{frame}
+%%%% \begin{frame}{Outline}
+%%%%     \tableofcontents
+%%%% \end{frame}
 
-\begin{frame}
-    \begin{center}
-        \includegraphics[keepaspectratio, height = 0.8\textheight]{img/mechazawa.png}
-    \end{center}
-\end{frame}
+\begin{frame}[fragile]
+    \begin{minted}[fontsize = \small]{bash}
+        python3 -m pip install my-project
+    \end{minted}
 
-\section{pip install}
-\begin{frame}
-    python3 -m pip install my-project
+    \pause
+
+    \begin{block}{Challenges}
+        \pause
+        \begin{itemize}[<+->]
+            \item I want to use C++
+            \item Install on Linux
+            \item Install on OS X
+            \item Install on Windows
+        \end{itemize}
+    \end{block}
 
     \note {
         This is the only end-user code in this talk. The rest is of it is all
         developer centric
     }
+\end{frame}
+
+\section{pip install}
+\begin{frame}{Meet Mechazawa}
+    \begin{center}
+        \includegraphics[keepaspectratio, height = 0.6\textheight]{img/mechazawa.png}
+    \end{center}
 \end{frame}
 
 \begin{frame}
@@ -358,12 +367,6 @@ Options for build_ext command:
     \end{center}
 \end{frame}
 
-\begin{frame}
-    \begin{center}
-        \includegraphics[height = 0.8\textheight]{img/scream.jpg}
-    \end{center}
-\end{frame}
-
 \section{And then things got worse ...}
 
 \begin{frame}{The struggle of binary libraries}
@@ -407,13 +410,15 @@ Options for build_ext command:
 \begin{frame}[fragile]
     \begin{minted}{python}
 >>> my_package.math.div(4, 2)
-1
+2
     \end{minted}
 \end{frame}
 
 \begin{frame}[fragile]
     \begin{minted}{python}
 >>> my_package.math.div(2, 0)
+Floating point exception
+Process terminated
     \end{minted}
 \end{frame}
 
@@ -433,6 +438,20 @@ Options for build_ext command:
                   development and build systems suck
         \end{itemize}
     }
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{minted}{python}
+>>> my_package.math.div(2, 0)
+Floating point exception
+Process terminated
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \begin{center}
+        \includegraphics[height = 0.8\textheight]{img/scream.jpg}
+    \end{center}
 \end{frame}
 
 \begin{frame}{Is paradise lost?}
@@ -468,12 +487,14 @@ Options for build_ext command:
     }
 \end{frame}
 
-\begin{frame}[fragile]
-    \begin{itemize}
-        \item \verb|find_package|
+\begin{frame}[fragile]{CMake tools (??)}
+    \begin{itemize}[<+->]
+        \item \verb|find_package(BLAS)|
+        \item \verb|find_package(FLEX)|
         \item \verb|target_link_libraries|
         \item \verb|set(CMAKE_CXX_STANDARD)|
         \item \verb|if (MSVC)|
+        \item \verb|check_include_file(sys/stat.h)|
     \end{itemize}
 
     \note{
@@ -487,24 +508,6 @@ Options for build_ext command:
             \item cmake is pretty good at dealing with platform differences
         \end{itemize}
     }
-\end{frame}
-
-\begin{frame}
-    \begin{itemize}
-        \item Configuration-specific configuration
-        \item Header detection
-        \item Dependencies build time
-        \item Dependencies runtime
-    \end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
-    \begin{tabular}{l l}
-        Configuration-specific  & \verb|if (BUILD_PYTHON)| \\
-        Header detection        & \verb|check_include_file(sys/stat.h)| \\
-        Build                   & \verb|find_package(FLEX)| \\
-        Runtime                 & \verb|target_link_libraries(lib)| \\
-    \end{tabular}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -564,12 +567,17 @@ Options for build_ext command:
     \inputminted{c++}{my-package/template-div2.cpp}
 \end{frame}
 
-\section{Intermezzo: cmake integration}
 \begin{frame}[fragile]
+    \begin{minted}{python}
+>>> my_package.math.div(2, 0)
+ZeroDivisionError: division by zero
+>>>
+    \end{minted}
+\end{frame}
 
-    \verb|mkdir build && cd build && cmake ..|
-    \verb|make && ctest --output-on-failure|
-
+\section{Intermezzo: integrate setup.py with cmake}
+\begin{frame}[fragile]
+    \verb|cmake && make && ctest|
     \note{
         \begin{itemize}
             \item This command is really what I mostly do during development
@@ -583,6 +591,10 @@ Options for build_ext command:
 
 \begin{frame}
     Avoid double bookkeeping
+\end{frame}
+
+\begin{frame}
+    Avoid multiple steps
 \end{frame}
 
 \begin{frame}
@@ -620,6 +632,7 @@ Options for build_ext command:
 \end{frame}
 
 \begin{frame}[fragile]
+    % TODO reveal
     \inputminted{cmake}{my-package/custom-target.cmake}
 
 \note{
@@ -636,6 +649,10 @@ Options for build_ext command:
         \item Let's re-invent the wheel
     \end{itemize}
 }
+\end{frame}
+
+\begin{frame}
+    TODO: transition from cmake-as-root
 \end{frame}
 
 \begin{frame}
@@ -842,13 +859,10 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 
 \begin{frame}
     \begin{block}{Problem}
-        No machine running Windows
-    \end{block}
-\end{frame}
-
-\begin{frame}
-    \begin{block}{Problem}
-        No machine running Red Hat 5
+        \begin{itemize}[<+->]
+            \item No machine running Red Hat 5
+            \item No machine running Windows
+        \end{itemize}
     \end{block}
 \end{frame}
 
@@ -861,7 +875,9 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 \end{frame}
 
 \begin{frame}[fragile]
-    \verb|python3 -m pip install my-project|
+    \begin{minted}[fontsize = \small]{bash}
+        python3 -m pip install my-project
+    \end{minted}
 \end{frame}
 
 \begin{frame}
@@ -885,6 +901,7 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
     \begin{description}
         \item [scikit-build] Setuptools-CMake glue
         \item [multibuild] Wheel automation
+        \item [setuptools-scm] Package version from git tag
     \end{description}
 \end{frame}
 

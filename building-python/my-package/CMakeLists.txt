@@ -8,7 +8,6 @@ add_library(math MODULE my_package/math/math11.cpp)
 python_extension_module(math)
 
 if (MSVC)
-    target_compile_options(math PRIVATE /EHsc)
 endif ()
 
 install(TARGETS math LIBRARY DESTINATION my_package)
