@@ -1,45 +1,35 @@
-os: osx
+# machine definition
+os: linux
+language: python
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+  - 3.7
 
-env:
-    global:
-        - UNICODE_WIDTH=32
-        - PLAT=x86_64
-    matrix:
-        - MB_PYTHON_VERSION=2.7
-        - MB_PYTHON_VERSION=3.5
-        - MB_PYTHON_VERSION=3.6
-        - MB_PYTHON_VERSION=3.7
+# scripts
+install:
+    - pip install -r python/requirements-dev.txt
+    - pip install bandit # run static analysis
+    - bandit -c bandit.yml -r python/
 
-matrix:
-    fast_finish: true
+script:
+    - cmake -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_BUILD_TYPE=Release
+            ..
+    - make
+    - ctest --output-on-failure
+    - build_wheel python
 
 before_install:
     - git clone https://github.com/matthew-brett/multibuild
     - source multibuild/common_utils.sh
     - source multibuild/travis_steps.sh
-    - before_install
-
-install:
-    - pip install -r python/requirements-dev.txt
-    - pip install bandit
-    - bandit -c bandit.yml -r python/
-
-before_script:
-    - cmake -DBUILD_SHARED_LIBS=ON
-            -DCMAKE_BUILD_TYPE=Release
-            -DCMAKE_INSTALL_NAME_DIR=/usr/local/lib
-            ..
-
-script:
-    - make && ctest --output-on-failure
-    - make install
-    - build_wheel python $PLAT
-    - install_run $PLAT
+    - before_install # set up environment
 
 deploy:
     - provider: pypi
       user: mechazawa
-      distributions: --skip-cmake build sdist
       password:
         secure: encrypted-key
       on:
