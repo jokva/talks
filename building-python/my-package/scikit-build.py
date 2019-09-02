@@ -4,5 +4,5 @@ skbuild.setup(
     version = '0.0.1',
     author = 'Mechazawa',
     license = 'BSD',
-    packages = ['my_package', 'my_package.math'],
+    packages = ['my_package'],
 )

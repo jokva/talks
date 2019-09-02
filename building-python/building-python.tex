@@ -33,7 +33,6 @@
 \setminted{fontsize=\scriptsize}
 \setmintedinline{fontsize=\small}
 
-
 \mode<presentation>{}
 
 \title{Building C++-Python libraries}
@@ -83,12 +82,13 @@
     }
 \end{frame}
 
-\section{pip install}
 \begin{frame}{Meet Mechazawa}
     \begin{center}
         \includegraphics[keepaspectratio, height = 0.6\textheight]{img/mechazawa.png}
     \end{center}
 \end{frame}
+
+\section{pip install}
 
 \begin{frame}
     \begin{block}{}
@@ -381,7 +381,7 @@ Options for build_ext command:
 
 \begin{frame}[fragile]{Issues building C++}
     \begin{itemize}[<+->]
-        \item Conditional and options, \verb|USE_BLAS|
+        \item Conditionals and options, \verb|USE_BLAS|
         \item System differences, \verb|#include| sys/inet.h or winsock.h
         \item Build time dependencies and code generation
         \item Runtime dependencies and transitive linking
@@ -495,6 +495,7 @@ Process terminated
         \item \verb|set(CMAKE_CXX_STANDARD)|
         \item \verb|if (MSVC)|
         \item \verb|check_include_file(sys/stat.h)|
+        \item \verb|option(BUILD_SHARED_LIBS)|
     \end{itemize}
 
     \note{
@@ -649,7 +650,7 @@ ZeroDivisionError: division by zero
     }
 \end{frame}
 
-\section{Above the clouds}
+\section{Build everything, everywhere}
 
 \begin{frame}[fragile]
     \begin{description}
@@ -850,6 +851,7 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 \end{frame}
 
 % TODO: docker?
+% quay.io/pypa/manylinux2010_x86_64
 
 \begin{frame}
     \inputminted[firstline = 24, lastline = 28]{yaml}{travis.yml}
@@ -881,7 +883,7 @@ my_project-0.0.1-cp37-cp37m-manylinux1_x86_64.whl
 \end{frame}
 
 \begin{frame}{Shoutout}
-    \begin{description}
+    \begin{description}[labelwidth=\widthof{\bfseries setuptools-scm}]
         \item [scikit-build] Setuptools-CMake glue
         \item [multibuild] Wheel automation
         \item [setuptools-scm] Package version from git tag

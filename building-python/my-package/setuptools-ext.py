@@ -9,5 +9,5 @@ setuptools.setup(
     author = 'Mechazawa',
     license = 'BSD',
     ext_modules = [my_math],
-    packages = ['my_package', 'my_package.math'],
+    packages = ['my_package'],
 )
