@@ -15,8 +15,12 @@
 \beamertemplatenavigationsymbolsempty
 \AtBeginSection[]{
     \begin{frame}
-        \frametitle{Table of Contents}
-        \tableofcontents[currentsection]
+        \vfill
+        \centering
+        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+            \usebeamerfont{title}\insertsectionhead\par%
+        \end{beamercolorbox}
+        \vfill
     \end{frame}
 }
 \setbeamerfont{page number in head/foot}{size=\normalsize}
@@ -87,7 +91,22 @@
 \end{frame}
 
 \begin{frame}
-    \begin{itemize}
+    \begin{block}{}
+        What does pip install do?
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{enumerate}[<+->]
+        \item Looks up the package name in an \emph{index}
+        \item Determines if the package is installable
+        \item Fetches the package
+        \item Extracts the contents to site-packages/
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Different pythons}
+    \begin{itemize}[<+->]
         \item Pure python
         \item Impure python (non-python backend)
         \item Thin library wrappers
@@ -111,21 +130,6 @@
         \end{itemize}
         We'll focus on impure and fat library
     }
-\end{frame}
-
-\begin{frame}
-    \begin{block}{}
-        What does pip install do?
-    \end{block}
-\end{frame}
-
-\begin{frame}
-    \begin{enumerate}
-        \item Looks up the package name in an \emph{index}
-        \item Determines if the package is installable
-        \item Fetches the package
-        \item Extracts the package site-packages/
-    \end{enumerate}
 \end{frame}
 
 \begin{frame}
@@ -365,7 +369,7 @@ Options for build_ext command:
 
 \section{And then things got worse...}
 
-\begin{frame}{The struggle of binary libraries}
+\begin{frame}{Issues building C++}
     \begin{itemize}[<+->]
         \item Compiler options
         \item Compiler versions
@@ -375,7 +379,7 @@ Options for build_ext command:
     \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{The struggle of binary libraries}
+\begin{frame}[fragile]{Issues building C++}
     \begin{itemize}[<+->]
         \item Conditional and options, \verb|USE_BLAS|
         \item System differences, \verb|#include| sys/inet.h or winsock.h
@@ -483,7 +487,7 @@ Process terminated
     }
 \end{frame}
 
-\begin{frame}[fragile]{CMake tools (??)}
+\begin{frame}[fragile]{CMake goodies}
     \begin{itemize}[<+->]
         \item \verb|find_package(BLAS)|
         \item \verb|find_package(FLEX)|
@@ -570,7 +574,7 @@ ZeroDivisionError: division by zero
     \end{minted}
 \end{frame}
 
-\section{Intermezzo: integrate setup.py with cmake}
+\section{Intermezzo \\ {\large integrate setup.py with cmake}}
 \begin{frame}[fragile]
     \verb|cmake && make && ctest|
     \note{
@@ -813,8 +817,6 @@ my_project-0.0.1.dist-info/WHEEL
 \begin{frame}[fragile]
     \inputminted[highlightlines = {7-8}]{python}{my-package/scikit-scm.py}
 \end{frame}
-
-\section{Lowering boats}
 
 \begin{frame}
     \begin{center}
