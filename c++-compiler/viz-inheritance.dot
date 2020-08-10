@@ -1,0 +1,48 @@
+digraph {
+
+    graph [
+        rankdir = "LR"
+    ];
+
+    node [
+        shape = "box"
+    ]
+
+    { rank = same; "parent* p"; "child* c"; classes }
+
+    classes [
+        label = <
+            <table border="0" cellborder="0" cellspacing="0">
+                <tr><td align = "left"><b>parent</b></td></tr>
+                <tr><td align = "left">  int x</td></tr>
+                <tr><td align = "left">  int y</td></tr>
+
+                // empty row
+                <tr><td><br/></td></tr>
+
+                <tr><td align = "left"><b>child : parent</b></td></tr>
+                <tr><td align = "left">  int z</td></tr>
+            </table>
+        >
+        shape = plain
+    ];
+
+    object [
+        label = <
+            <table border="0" cellborder="0" cellspacing="0" cellpadding = "5" bgcolor = "lightblue">
+                <tr>
+                    <td width = "25" bgcolor = "lightgray" port = "base" >x</td>
+                    <td rowspan = "2" bgcolor = "lightgray" border = "1" sides = "RB" style = "dotted">parent</td>
+                    <td rowspan = "3">child</td>
+                </tr>
+                <tr><td bgcolor = "lightgray" border = "1" sides = "B" style = "dotted">y</td></tr>
+                <tr><td >z</td></tr>
+            </table>
+        >
+        shape = plain
+    ];
+
+    "parent* p" -> object:base:n;
+    "child* c" -> object:base:n;
+
+}
