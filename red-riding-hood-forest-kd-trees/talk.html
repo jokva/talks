@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="author" content="Jørgen Kvalsvik">
+  <meta name="dcterms.date" content="2021-05-13">
+  <title>Red Riding Hood &amp; the forest of k-d trees</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css">
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/black.css" id="theme">
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'https://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css' : 'https://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  </script>
+  <!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide">
+  <h1 class="title">Red Riding Hood &amp; the forest of k-d trees</h1>
+  <p class="author">Jørgen Kvalsvik</p>
+  <p class="date">May 13, 2021</p>
+</section>
+
+<section><section id="what-is-in-this-talk" class="title-slide slide level1"><h1>What is in this talk</h1></section><section class="slide level2">
+
+<p>My k-d tree journey</p>
+</section><section class="slide level2">
+
+<p>Why the odd title?</p>
+<ul>
+<li class="fragment">Fairy tales are told and re-told</li>
+<li class="fragment">Vehicle for teaching &amp; learning</li>
+<li class="fragment">Familiar form makes room for play</li>
+<li class="fragment">Transcend time and place</li>
+</ul>
+</section><section class="slide level2">
+
+<p>Disclaimers</p>
+</section><section class="slide level2">
+
+<p>Some code has been modified to fit on slides</p>
+</section><section class="slide level2">
+
+<p>Spoiler alert</p>
+</section></section>
+<section><section id="little-red-riding-hood" class="title-slide slide level1"><h1>Little Red Riding Hood</h1></section><section class="slide level2">
+
+<p><img data-src="img/1-hood.jpg" height="600" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/3-hood.jpg" height="600" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/2-hood.jpg" height="600" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/4-hood.png" height="600" /></p>
+</section><section class="slide level2">
+
+<div style="text-align: left;">
+<p>The collapse of the Taiping Rebellion and my subsequent wanderings to avoid the deadly clutches of vengeful imperial agents form the basis of this narrative, a narrative whose very existence and use of the first person pretty much ruin any sense of suspense that might have made it worth reading.</p>
+</div>
+<div class="fragment">
+<p>Drew Herman, Port Angeles, WA</p>
+<p>https://www.bulwer-lytton.com/2021</p>
+</div>
+</section></section>
+<section><section id="木" class="title-slide slide level1"><h1>木</h1></section><section class="slide level2">
+
+<p>Given a set of points <strong>P</strong> with a value (x, y, v) and a radius <strong>R</strong></p>
+<p>what is the averge value of the points within <strong>R</strong> of <strong>p</strong> for every <strong>p</strong> in <strong>P</strong>.</p>
+</section><section class="slide level2">
+
+<p><img data-src="img/1-problem-statement.svg" style="width:75.0%" /></p>
+<p>Average value in the circle?</p>
+</section><section class="slide level2">
+
+<pre><code>for q in points:
+    if distance(p, q) &lt;= radius:
+        close.append(q)
+return mean(close)</code></pre>
+</section><section class="slide level2">
+
+<pre><code>for p in points:
+    close = []
+    for q in points:
+        if distance(p, q) &lt;= radius:
+            close.append(q)
+    yield mean(close)</code></pre>
+<div class="fragment">
+<p>Performance? Complexity?</p>
+</div>
+<div class="fragment">
+<p>O(n²)</p>
+</div>
+</section><section class="slide level2">
+
+<p><img data-src="img/5-hood.jpg" height="600" /></p>
+</section><section id="k-d-tree" class="slide level2">
+<h2>k-d tree</h2>
+</section><section class="slide level2">
+
+<div style="text-align: left;">
+<p>The k-d tree is a binary tree in which every node is a k-dimensional point.</p>
+</div>
+<div class="fragment">
+<div style="text-align: left;">
+<p>Every non-leaf node can be thought of as implicitly generating a splitting hyperplane that divides the space into two parts, known as half-spaces.</p>
+</div>
+</div>
+</section><section class="slide level2">
+
+<div style="text-align: left;">
+<p>Points to the left of this hyperplane are represented by the left subtree of that node and points to the right of the hyperplane are represented by the right subtree.</p>
+</div>
+<div class="fragment">
+<div style="text-align: left;">
+<p>The hyperplane direction is chosen in the following way: every node in the tree is associated with one of the k dimensions, with the hyperplane perpendicular to that dimension’s axis.</p>
+</div>
+</div>
+<div class="fragment">
+<p>Source: <a href="https://en.wikipedia.org/wiki/Kd_tree">wikipedia.org/wiki/kd_tree</a></p>
+</div>
+</section><section class="slide level2">
+
+<blockquote>
+<p>A monad is a monoid in the category of endofunctors, what’s the problem?</p>
+</blockquote>
+</section><section id="features" class="slide level2">
+<h2>Features</h2>
+<ul>
+<li>Nearest neighbour search</li>
+<li>Range searches</li>
+<li>Database search by multiple keys
+<ul>
+<li>Example: salary &amp; age</li>
+</ul></li>
+</ul>
+</section></section>
+<section><section id="inventing-the-k-d-tree" class="title-slide slide level1"><h1>Inventing the k-d tree</h1></section><section class="slide level2">
+
+<pre><code>template &lt; typename Point &gt;
+struct kdtree {
+    kdtree() = default;
+
+    template &lt; typename PointItr &gt;
+    kdtree(PointItr, PointItr, int depth = 0);
+
+    Point p;
+    std::unique_ptr&lt; kdtree &gt; left;
+    std::unique_ptr&lt; kdtree &gt; right;
+};</code></pre>
+</section><section class="slide level2">
+
+<pre><code>template &lt; typename Point, typename Radius &gt;
+bool inrange(const Point&amp; p, const Point&amp; q, Radius r) noexcept {
+    const auto x0 = q[0] - p[0];
+    const auto x1 = q[1] - p[1];
+    return x0*x0 + x1*x1 &lt;= r*r;
+}</code></pre>
+</section><section class="slide level2">
+
+<p>Construction algorithm</p>
+<pre><code>function kdtree ([Point] points, int depth) {
+    // Select axis based on depth
+    var int axis := depth mod k;
+
+    select median by axis from pointList;
+
+    // Create node and construct subtree
+    node.location := median;
+    node.left     := kdtree(points &lt; median, depth+1);
+    node.right    := kdtree(points &gt; median, depth+1);
+    return node;
+}</code></pre>
+</section><section class="slide level2">
+
+<pre><code>kdtree::kdtree(PointItr fst, PointItr lst, int depth) {
+    const auto axis = depth % 2;
+    auto less = [axis](const auto&amp; l, const auto&amp; r) noexcept {
+        return l[axis] &lt; r[axis];
+    };
+    std::sort(fst, lst, less);
+    const auto midpoint = std::distance(fst, lst) / 2;
+    const auto mid  = std::next(fst, midpoint);
+    const auto mid1 = std::next(mid);
+    this-&gt;p = *mid;
+
+    if (fst != mid)
+        this-&gt;left = std::make_unique(fst, mid, depth + 1);
+    if (mid1 != lst)
+        this-&gt;right = std::make_unique(mid1, lst, depth + 1);
+}</code></pre>
+</section><section class="slide level2">
+
+<p>Nearest neighbour search</p>
+<pre><code>NNS(q: point, n: node, p: ref point, w: ref distance):
+if leaf(n):
+    w&#39; := ||q - n.point||
+    if w&#39; &lt; w then w := w&#39;; p := n.point
+else:
+    if q(n.axis) &lt;= n.value:
+        search_first := left
+    else:
+        search_first := right
+
+    if search_first == left:
+        if q(n.axis) - w &lt;= n.value then NSS(q, n.left,  p, w)
+        if q(n.axis) + w &gt;  n.value then NSS(q, n.right, p, w)
+    else:
+        if q(n.axis) + w &gt;  n.value then NSS(q, n.right, p, w)
+        if q(n.axis) - w &lt;= n.value then NSS(q, n.left,  p, w)</code></pre>
+<p>Ref [1]</p>
+</section><section class="slide level2">
+
+<p>Nodes in radius search</p>
+<pre><code>NRS(q: point, n: node, p: ref point, r: radius):
+w&#39; := ||q - n.point||
+if w&#39; &lt; r then yield n
+
+if not leaf(n):
+    if q(n.axis) &lt;= n.value:
+        search_first := left
+    else:
+        search_first := right
+
+    if search_first == left:
+        if q(n.axis) - w &lt;= n.value then NRS(q, n.left,  p, w)
+        if q(n.axis) + w &gt;  n.value then NRS(q, n.right, p, w)
+    else:
+        if q(n.axis) + w &gt;  n.value then NRS(q, n.right, p, w)
+        if q(n.axis) - w &lt;= n.value then NRS(q, n.left,  p, w)</code></pre>
+</section><section class="slide level2">
+
+<p>Two decisions:</p>
+<ul>
+<li>Include the node or not</li>
+<li>Walk a subtree or not</li>
+</ul>
+</section><section class="slide level2">
+
+<div class="columns">
+<div class="column">
+<p><img data-src="img/2-points-in-space.png" /></p>
+</div><div class="column">
+<p><img data-src="img/3-points-in-space-tree.svg" style="width:100.0%" /></p>
+</div>
+</div>
+</section><section class="slide level2">
+
+<div class="columns">
+<div class="column">
+<p><img data-src="img/4-partitioned-space.svg" style="width:100.0%" /></p>
+</div><div class="column">
+<p><img data-src="img/3-points-in-space-tree.svg" style="width:100.0%" /></p>
+</div>
+</div>
+</section><section class="slide level2">
+
+<p><img data-src="img/5-search-points.png" style="width:50.0%" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/6-search-ranges.png" style="width:50.0%" /></p>
+</section><section class="slide level2">
+
+<p>Takeaways:</p>
+<ul>
+<li>Check subtree if search radius crosses dividing line</li>
+<li>Only need to check <em>towards</em> the dividing line</li>
+</ul>
+<p>Easier question: when do you <strong><em>not</em></strong> walk the subtree?</p>
+</section><section class="slide level2">
+
+<p>Neighbours-in-range</p>
+<pre><code>OutItr query(P&amp; p, double r, InItr node, int depth, OutItr out) {
+    const auto&amp; q    = *node-&gt;p;
+    const auto left  = node.left.get();
+    const auto right = node.right.get();
+    const auto axis  = depth % 2;
+
+    if (inrange(p, q, r))
+        *out++ = q;
+
+    if (p[axis] - r &lt;= q[axis] &amp;&amp; left)
+        out = query(p, r, left,  depth + 1, out);
+    if (p[axis] + r &gt;= q[axis] &amp;&amp; right)
+        out = query(p, r, right, depth + 1, out);
+
+    return out;
+}</code></pre>
+</section></section>
+<section><section id="baby-steps" class="title-slide slide level1"><h1>Baby steps</h1></section><section class="slide level2">
+
+<p><img data-src="img/1-bull.jpg" /></p>
+</section><section id="effective-abstractions" class="slide level2">
+<h2>Effective abstractions</h2>
+</section><section class="slide level2">
+
+<pre class="stretch"><code>class kdtree::view {
+public:
+    explicit view(const kdtree* node) : n(node) {}
+
+    const Point&amp; operator * () const noexcept (true) {
+        return this-&gt;n-&gt;p;
+    }
+    view left() const noexcept (true) {
+        return view(this-&gt;n-&gt;left.get());
+    }
+    view right() const noexcept (true) {
+        return view(this-&gt;n-&gt;right.get());
+    }
+    operator bool () const noexcept (true) {
+        return bool(this-&gt;n);
+    }
+
+private:
+    const kdtree* n;
+};</code></pre>
+</section><section class="slide level2">
+
+<p><img data-src="img/1-pointer.png" height="500" /></p>
+<div class="fragment">
+<p>Pointer in a top hat</p>
+</div>
+</section><section class="slide level2">
+
+<p><img data-src="img/2-bull.png" height="600" /></p>
+</section><section class="slide level2">
+
+<pre><code>OutItr query(P&amp; p, double r, InItr node, int depth, OutItr out) {
+    const auto&amp; q    = *node;
+    const auto left  = node.left();
+    const auto right = node.right();
+    const auto axis  = depth % 2;
+
+    if (inrange(p, q, r))
+        *out++ = q;
+
+    if (p[axis] - r &lt;= q[axis] &amp;&amp; left)
+        out = query(p, r, left,  depth + 1, out);
+    if (p[axis] + r &gt;= q[axis] &amp;&amp; right)
+        out = query(p, r, right, depth + 1, out);
+
+    return out;
+}</code></pre>
+<div class="fragment">
+<p>Missed opportunity?</p>
+</div>
+</section><section class="slide level2">
+
+<pre><code>OutItr query(const P&amp; p, double r, InItr node, OutItr out) {
+    const auto&amp; q    = *node;
+    const auto left  = node.left();
+    const auto right = node.right();
+    const auto axis  = node.depth() % 2;
+
+    if (inrange(p, q, r))
+        *out++ = q;
+
+    if (p[axis] - r &lt;= q[axis] &amp;&amp; left)
+        out = query(p, r, left,  out);
+    if (p[axis] + r &gt;= q[axis] &amp;&amp; right)
+        out = query(p, r, right, out);
+
+    return out;
+}</code></pre>
+</section><section class="slide level2">
+
+<p>Easier to use</p>
+<ul>
+<li>Impossible to forget incrementing depth</li>
+<li>Similar to the familiar iterators</li>
+<li>No get()</li>
+</ul>
+</section><section class="slide level2">
+
+<p>Models tree properties</p>
+<ul>
+<li>Left/right subtree</li>
+<li>Captures depth</li>
+<li>Captures leaf</li>
+</ul>
+</section><section class="slide level2">
+
+<p>This is a <em>very</em> effective abstraction; query() is not really touched again for the rest of the talk</p>
+</section></section>
+<section><section id="representation" class="title-slide slide level1"><h1>Representation</h1></section><section class="slide level2">
+
+<pre><code>template &lt; typename Point &gt;
+struct kdtree {
+    kdtree() = default;
+
+    template &lt; typename PointItr &gt;
+    kdtree(PointItr, PointItr, int depth = 0);
+
+    Point p;
+    std::unique_ptr&lt; kdtree &gt; left;
+    std::unique_ptr&lt; kdtree &gt; right;
+};</code></pre>
+</section><section class="slide level2">
+
+<ul>
+<li>Pointer-based trees support fast splicing
+<ul>
+<li>but splicing likely invalidates invariant</li>
+<li>splicing gives lifetime issues</li>
+</ul></li>
+<li>Tree merges not very common
+<ul>
+<li>full rebuilds faster without pointer chasing</li>
+</ul></li>
+<li>Bad usability, bad performance</li>
+<li>Nodes treated as independent, not part of <em>collection</em></li>
+</ul>
+</section><section class="slide level2">
+
+<p>Store collection of nodes</p>
+<pre><code>template &lt; typename Point &gt;
+class kdtree {
+    Point p;
+    kdtree* left  = nullptr;
+    kdtree* right = nullptr;
+    std::unique_ptr&lt; kdtree[] &gt; storage;
+};</code></pre>
+</section><section class="slide level2">
+
+<p><em>Improvements enable new improvements</em></p>
+</section><section class="slide level2">
+
+<pre><code>template &lt; typename Point &gt;
+class kdtree {
+    struct node {
+        Point p;
+        node* left  = nullptr;
+        node* right = nullptr;
+    };
+    std::unique_ptr&lt; node[] &gt; storage;
+};</code></pre>
+</section><section class="slide level2">
+
+<p>In all the fairy tales, things come in threes</p>
+</section><section class="slide level2">
+
+<p>We want the tree to be:</p>
+<ul>
+<li>Default constructible</li>
+<li>Copy constructible</li>
+<li>Move constructible</li>
+</ul>
+</section><section class="slide level2">
+
+<ul>
+<li>✓ Default constructible</li>
+<li>✗ Copy constructible</li>
+<li>✓ Move constructible</li>
+</ul>
+</section><section id="the-rule-of-three" class="slide level2">
+<h2>The rule of three</h2>
+</section><section class="slide level2">
+
+<div style="text-align: left;">
+<p>If a class requires a user-defined destructor, a user-defined copy constructor, or a user-defined copy assignment operator, it almost certainly requires all three.</p>
+</div>
+</section><section class="slide level2">
+
+<pre><code>kdtree(const kdtree&amp; o) {
+    const auto n = count_nodes(o);
+    this-&gt;storage.reset(new kdtree[n]);
+    std::copy_n(o.storage.get(), n, this-&gt;storage.get());
+}</code></pre>
+<div class="fragment">
+<p>oops</p>
+</div>
+</section><section class="slide level2">
+
+<p><img data-src="img/1-rule-of-n.png" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/2-rule-of-n.png" /></p>
+</section><section class="slide level2">
+
+<p><img data-src="img/3-rule-of-n.png" /></p>
+</section><section class="slide level2">
+
+<pre class="stretch"><code>kdtree(const kdtree&amp; o) {
+    const auto n = count_nodes(o);
+    this-&gt;storage.reset(new kdtree[n]);
+    std::copy_n(o.storage.get(), n, this-&gt;storage.get());
+
+    auto* src0 = o.storage.get();
+    auto* dst0 = this-&gt;storage.get();
+    for (int i = 0; i &lt; n; ++i) {
+        auto&amp; dst = this-&gt;storage[i];
+        const auto&amp; src = o.storage[i];
+        dst.p = src-&gt;p;
+
+        if (src.left)  dst.left  = dst0 + distance(src0, src.left);
+        if (src.right) dst.right = dst0 + distance(src0, src.right);
+    }
+}</code></pre>
+<div class="fragment">
+<p>What about move?</p>
+</div>
+</section><section class="slide level2">
+
+<p>… it <em>almost certainly</em> requires all three.</p>
+</section><section id="the-rule-of-zero" class="slide level2">
+<h2>The rule of zero</h2>
+</section><section class="slide level2">
+
+<div style="text-align: left;">
+<p>Classes that have custom destructors, copy/move constructors or copy/move assignment operators should deal exclusively with ownership</p>
+</div>
+</section><section class="slide level2">
+
+<p>Remember this from the 90s</p>
+<pre><code>template &lt; Point &gt;
+class kdtree : public binarytree&lt; Point &gt;</code></pre>
+</section><section class="slide level2">
+
+<pre><code>class kdtree {
+    struct node {
+        Point p;
+        node* left  = nullptr;
+        node* right = nullptr;
+    };
+    tree_storage&lt; node &gt; storage;
+};</code></pre>
+</section><section class="slide level2">
+
+<pre><code>template &lt; typename Node &gt;
+struct tree_storage {
+public:
+    tree_storage() = default;
+    tree_storage(std::size_t n) : storage(n) {}
+    tree_storage(const tree_storage&amp; o);
+
+    const Node* get() const noexcept;
+          Node* get()       noexcept;
+
+private:
+    std::vector&lt; Node &gt; storage;
+};</code></pre>
+</section><section id="on-pointers" class="slide level2">
+<h2>On pointers</h2>
+</section><section class="slide level2">
+
+<p><img data-src="img/3-bull.jpg" /></p>
+</section><section class="slide level2">
+
+<p>The essence of a pointer</p>
+<ul>
+<li>Absolute address</li>
+<li>Arithmetic support</li>
+<li>Carries type information</li>
+<li>Can be marked “unset” (nullptr)</li>
+</ul>
+<div class="fragment">
+<p>What do we really use?</p>
+</div>
+</section><section class="slide level2">
+
+<p><img data-src="img/7-storage.png" /></p>
+<pre><code>storage = [(7,2) (5,4) (2,3) (4,7) (9,6) (8,1)]
+left    = [  1     2    -1    -1     5    -1  ]
+right   = [  4     3    -1    -1    -1    -1  ]</code></pre>
+</section><section class="slide level2">
+
+<pre><code>class kdtree {
+private:
+    std::vector&lt; int &gt;   left;
+    std::vector&lt; int &gt;   right;
+    std::vector&lt; Point &gt; storage;
+};</code></pre>
+<div class="fragment">
+<ul>
+<li>Relocatable</li>
+<li>Cheap to copy</li>
+<li>Easy to serialize</li>
+</ul>
+</div>
+</section><section class="slide level2">
+
+<pre><code>view left() const noexcept (true) {
+    // follow edges by looking up left[pos]
+    // and maintain pos as the tree is descended
+    const auto k = this-&gt;tree-&gt;left[this-&gt;pos];
+    return view(this-&gt;tree, k, this-&gt;d + 1);
+}</code></pre>
+</section><section class="slide level2">
+
+<pre><code>template &lt; typename Point &gt;
+class kdtree {
+public:
+    template &lt; typename PointItr &gt;
+    kdtree(PointItr, PointItr);
+
+    kdtree()              = default;
+    kdtree(const kdtree&amp;) = default;
+    kdtree(kdtree&amp;&amp;)      = default;
+
+private:
+    std::vector&lt; int &gt;   left;
+    std::vector&lt; int &gt;   right;
+    std::vector&lt; Point &gt; storage;
+};</code></pre>
+</section><section class="slide level2">
+
+<ul>
+<li>✓ Default constructible</li>
+<li>✓ Copy constructible</li>
+<li>✓ Move constructible</li>
+</ul>
+</section><section class="slide level2">
+
+<pre><code>storage = [(7,2) (5,4) (2,3) (4,7) (9,6) (8,1)]
+left    = [  1     2     0     0     5     0  ]
+right   = [  4     3     0     0     0     0  ]</code></pre>
+<div class="fragment">
+<pre><code>kdtree::kdtree(PointItr fst, PointItr lst) :
+    left   (std::distance(fst, lst), 0),
+    right  (std::distance(fst, lst), 0),
+    storage(std::distance(fst, lst))
+{
+    this-&gt;init(fst, lst, 0, 0);
+}
+
+kdtree::view::operator bool () const noexcept (true) {
+    return bool(this-&gt;pos);
+}</code></pre>
+</div>
+</section></section>
+<section><section id="gazing-into-the-abyss" class="title-slide slide level1"><h1>Gazing into the abyss</h1></section><section class="slide level2">
+
+<blockquote>
+<p>Abstraction does not stop at the class boundary</p>
+</blockquote>
+</section><section class="slide level2">
+
+<pre><code>// old
+const auto axis = depth % 2;
+const auto less = [axis](const auto&amp; l, const auto&amp; r) noexcept {
+    return l[axis] &lt; r[axis];
+};
+
+std::sort(fst, lst, less);
+const auto midpoint = std::distance(fst, lst) / 2;
+const auto mid = std::next(fst, midpoint);
+
+
+// new
+const auto pivot = this-&gt;select_pivot(fst, lst, depth);
+const auto mid   = this-&gt;partition_inplace(fst, lst, pivot);</code></pre>
+</section><section class="slide level2">
+
+<pre><code>const auto pivot = this-&gt;select_pivot(fst, lst, depth);
+const auto mid   = this-&gt;partition_inplace(fst, lst, pivot, depth);
+this-&gt;storage[pos] = *mid;
+auto out = pos + 1;
+
+if (fst != mid) {
+    this-&gt;left[pos] = out;
+    out = this-&gt;init(fst, mid, depth + 1, out);
+}
+const auto mid1 = std::next(mid);
+if (mid1 != lst) {
+    this-&gt;right[pos] = out;
+    out = this-&gt;init(mid1, lst, depth + 1, out);
+}
+return out;</code></pre>
+</section><section class="slide level2">
+
+<p>Easier to play with alternatives</p>
+<pre><code>PointItr select_pivot(PointItr fst, PointItr lst, int depth)
+noexcept {
+    struct less {
+        int axis;
+        constexpr explicit less(int a) : axis(a) {}
+        constexpr bool operator () (const P&amp; lhs, const P&amp; rhs)
+        const noexcept {
+            return lhs[axis] &lt; rhs[axis];
+        }
+    };
+    using indices = std::make_index_sequence&lt; 2 &gt;;
+    constexpr static auto cmps = init_less&lt; less &gt;(indices {});
+    std::sort(fst, lst, cmps[depth % 2]);
+    return std::next(fst, std::distance(fst, lst) / 2);
+}</code></pre>
+</section><section class="slide level2">
+
+<pre><code>template &lt; typename Less, std::size_t... I &gt;
+constexpr auto init_less(std::index_sequence&lt; I... &gt;) {
+    return std::array { Less(I)...  };
+}</code></pre>
+</section><section class="slide level2">
+
+<p><img data-src="img/1-bed.jpg" height="600" /></p>
+</section><section class="slide level2">
+
+<pre><code>template &lt; std::size_t Axis, typename Itr &gt;
+Itr kdtree::select_pivot(Itr fst, Itr lst) noexcept {
+    auto less = [](const auto&amp; lhs, const auto&amp; rhs) noexcept {
+        return lhs[Axis] &lt; rhs[Axis];
+    };
+
+    std::sort(fst, lst, less);
+    return std::next(fst, std::distance(fst, lst) / 2);
+}</code></pre>
+</section><section class="slide level2">
+
+</section></section>
+<section><section id="bonus" class="title-slide slide level1"><h1>Bonus</h1></section><section class="slide level2">
+
+<p>(left-balanced implicit edges)</p>
+</section><section class="slide level2">
+
+<p>Thank you</p>
+<blockquote>
+<p>As Granny sewed the bloody wolf pelt onto the stained red cape, Little Red downed another shot, reminding herself that even alcohol has a better taste than the gastric acid of a wolf.</p>
+</blockquote>
+</section><section class="slide level2">
+
+<p>References</p>
+<p>[1] http://andrewd.ces.clemson.edu/courses/cpsc805/references/nearest_search.pdf</p>
+</section></section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        // Push each slide change to the browser history
+        history: true,
+
+        // Optional reveal.js plugins
+        dependencies: [
+          { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/zoom-js/zoom.js', async: true },
+          { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true }
+        ]
+      });
+    </script>
+    </body>
+</html>
