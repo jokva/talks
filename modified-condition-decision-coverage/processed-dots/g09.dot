@@ -1,0 +1,18 @@
+digraph { // mcdc008a
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+while (a \< 10)\l\
+\ \ \ \ x = a++;\l\
+"
+    ]
+    A2 [label="", style = invis];
+    A3 [label="x = a;"];
+    A4 [label="if (a <= 9)"];
+    A5 [label="return;"];
+    A2 -> A4 [label="", color="black", style = invis];
+    A3 -> A4 [label="", color="black"];
+    A4 -> A3 [label="TRUE", color="blue"];
+    A4 -> A5 [label="FALSE", color="red"];
+}

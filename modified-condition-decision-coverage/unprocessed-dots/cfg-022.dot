@@ -1,0 +1,5 @@
+digraph { // always
+    A2 [label="_1 = 1;"];
+    A3 [label="return _1;"];
+    A2 -> A3 [label="", color="black"];
+}

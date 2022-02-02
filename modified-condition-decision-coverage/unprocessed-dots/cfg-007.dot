@@ -1,0 +1,13 @@
+digraph { // mcdc017b
+    A2 [label="noop ();"];
+    A3 [label="if (b_7(D) != 0)"];
+    A4 [label=""];
+    A5 [label="if (a_6 > 0)"];
+    A6 [label="return;"];
+    A2 -> A3 [label="", color="black"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A5 [label="FALSE", color="red"];
+    A4 -> A6 [label="", color="black"];
+    A5 -> A2 [label="TRUE", color="blue"];
+    A5 -> A6 [label="FALSE", color="red"];
+}

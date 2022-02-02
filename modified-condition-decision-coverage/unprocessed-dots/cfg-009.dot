@@ -1,0 +1,6 @@
+digraph { // mcdc017a
+    A2 [label="if (a_3 > 0)"];
+    A3 [label="return;"];
+    A2 -> A2 [label="TRUE", color="blue"];
+    A2 -> A3 [label="FALSE", color="red"];
+}

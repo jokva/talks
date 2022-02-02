@@ -1,0 +1,10 @@
+digraph { // mcdc008b
+    A2 [label=""];
+    A3 [label="x = a.1_1;"];
+    A4 [label="if (a_2 > 10)"];
+    A5 [label="return;"];
+    A2 -> A4 [label="", color="black"];
+    A3 -> A4 [label="", color="black"];
+    A4 -> A3 [label="TRUE", color="blue"];
+    A4 -> A5 [label="FALSE", color="red"];
+}

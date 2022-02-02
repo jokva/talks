@@ -1,0 +1,5 @@
+digraph { // id
+    A2 [label="_2 = x_1(D);"];
+    A3 [label="return _2;"];
+    A2 -> A3 [label="", color="black"];
+}

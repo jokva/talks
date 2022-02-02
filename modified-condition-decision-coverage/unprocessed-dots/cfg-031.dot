@@ -1,0 +1,28 @@
+digraph { // mcdc006a
+    A2 [label="if (a_3(D) != 0)"];
+    A3 [label="if (b_9(D) != 0)"];
+    A4 [label="if (c_4(D) != 0)"];
+    A5 [label="x = 1;"];
+    A6 [label="x = 2;"];
+    A7 [label=""];
+    A8 [label="if (c_4(D) != 0)"];
+    A9 [label="if (d_5(D) != 0)"];
+    A10 [label="x = 3;"];
+    A11 [label="x = 4;"];
+    A12 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A8 [label="FALSE", color="red"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A6 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A6 [label="FALSE", color="red"];
+    A5 -> A7 [label="", color="black"];
+    A6 -> A7 [label="", color="black"];
+    A7 -> A12 [label="", color="black"];
+    A8 -> A10 [label="TRUE", color="blue"];
+    A8 -> A9 [label="FALSE", color="red"];
+    A9 -> A10 [label="TRUE", color="blue"];
+    A9 -> A11 [label="FALSE", color="red"];
+    A10 -> A12 [label="", color="black"];
+    A11 -> A12 [label="", color="black"];
+}

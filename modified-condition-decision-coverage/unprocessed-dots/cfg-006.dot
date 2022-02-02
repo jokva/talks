@@ -1,0 +1,32 @@
+digraph { // mcdc017c
+    A2 [label="n_13 = a_11(D) + b_12(D);"];
+    A3 [label="if (a_11(D) != 0)"];
+    A4 [label="if (a_11(D) > left_2)"];
+    A5 [label="iftmp.6_15 = b_12(D);"];
+    A6 [label="iftmp.6_14 = left_2;"];
+    A7 [label="left_16 = iftmp.6_7;"];
+    A8 [label="if (b_12(D) != 0)"];
+    A9 [label="if (b_12(D) > right_4)"];
+    A10 [label="iftmp.7_18 = a_11(D);"];
+    A11 [label="iftmp.7_17 = right_4;"];
+    A12 [label="right_19 = iftmp.7_8;"];
+    A13 [label="if (n.8_1 > 0)"];
+    A14 [label="return;"];
+    A2 -> A3 [label="", color="black"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A8 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A6 [label="FALSE", color="red"];
+    A5 -> A7 [label="", color="black"];
+    A6 -> A7 [label="", color="black"];
+    A7 -> A8 [label="", color="black"];
+    A8 -> A9 [label="TRUE", color="blue"];
+    A8 -> A13 [label="FALSE", color="red"];
+    A9 -> A10 [label="TRUE", color="blue"];
+    A9 -> A11 [label="FALSE", color="red"];
+    A10 -> A12 [label="", color="black"];
+    A11 -> A12 [label="", color="black"];
+    A12 -> A13 [label="", color="black"];
+    A13 -> A3 [label="TRUE", color="blue"];
+    A13 -> A14 [label="FALSE", color="red"];
+}

@@ -1,0 +1,26 @@
+digraph { // mcdc016a
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+for (int i = 0; i \< a; i++)\l\
+\ \ \ \ for (int k = 0; k \< b; k++)\l\
+\ \ \ \ \ \ \ \ x = i + k;\l\
+"
+    ]
+    A2 [label="i = 0"];
+    A3 [label="k = 0"];
+    A4 [label="k = k + 1"];
+    A5 [label="if (k < b)"];
+    A6 [label="i = i + 1"];
+    A7 [label="if (i < a)"];
+    A8 [label="return"];
+    A2 -> A7 [label="", color="black"];
+    A3 -> A5 [label="", color="black"];
+    A4 -> A5 [label="", color="black"];
+    A5 -> A4 [label="TRUE", color="blue"];
+    A5 -> A6 [label="FALSE", color="red"];
+    A6 -> A7 [label="", color="black"];
+    A7 -> A3 [label="TRUE", color="blue"];
+    A7 -> A8 [label="FALSE", color="red"];
+}

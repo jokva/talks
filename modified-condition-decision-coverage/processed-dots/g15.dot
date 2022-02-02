@@ -1,0 +1,14 @@
+digraph { // mcdc017a
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+do \{ a--; \} while (a \> 0);
+"
+    ]
+
+    A2 [label="if (a > 0)"];
+    A3 [label="return"];
+    A2 -> A2 [label="TRUE", color="blue"];
+    A2 -> A3 [label="FALSE", color="red"];
+}

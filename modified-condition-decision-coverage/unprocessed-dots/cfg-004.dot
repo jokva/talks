@@ -1,0 +1,5 @@
+digraph { // inv
+    A2 [label="_3 = (int) _1;"];
+    A3 [label="return _3;"];
+    A2 -> A3 [label="", color="black"];
+}

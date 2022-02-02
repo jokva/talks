@@ -1,0 +1,3 @@
+digraph { // noop
+    A2 [label="return;"];
+}

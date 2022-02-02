@@ -1,0 +1,15 @@
+digraph { // mcdc015b
+    A2 [label="i_3 = 5;"];
+    A3 [label="if (i_1 == b_6(D))"];
+    A4 [label="// predicted unlikely by early return (on trees) predictor."];
+    A5 [label="i_8 = i_1 + -1;"];
+    A6 [label="if (i_1 > a_5(D))"];
+    A7 [label="return;"];
+    A2 -> A6 [label="", color="black"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A5 [label="FALSE", color="red"];
+    A4 -> A7 [label="", color="black"];
+    A5 -> A6 [label="", color="black"];
+    A6 -> A3 [label="TRUE", color="blue"];
+    A6 -> A7 [label="FALSE", color="red"];
+}

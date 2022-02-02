@@ -1,0 +1,14 @@
+digraph { // mcdc004d
+    A2 [label="if (a_4(D) != 0)"];
+    A3 [label="if (b_6(D) != 0)"];
+    A4 [label="if (c_7(D) != 0)"];
+    A5 [label="x = _2;"];
+    A6 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A6 [label="FALSE", color="red"];
+    A3 -> A5 [label="TRUE", color="blue"];
+    A3 -> A4 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A6 [label="FALSE", color="red"];
+    A5 -> A6 [label="", color="black"];
+}

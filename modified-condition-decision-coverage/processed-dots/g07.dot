@@ -1,0 +1,26 @@
+digraph { // mcdc006b
+    // TODO: should compare to a && b && c
+    // semantically equivalent, but should mc/dc differently
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+if (a)\l\
+\ \ \ \ if (b)\l\
+\ \ \ \ \ \ \ \ if (c)\l\
+\ \ \ \ \ \ \ \ \ \ \ \ x = a + b + c;\l\
+"
+    ]
+    A2 [label="if (a != 0)"];
+    A3 [label="if (b != 0)"];
+    A4 [label="if (c != 0)"];
+    A5 [label="x = _2;"];
+    A6 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A6 [label="FALSE", color="red"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A6 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A6 [label="FALSE", color="red"];
+    A5 -> A6 [label="", color="black"];
+}

@@ -1,0 +1,22 @@
+digraph { // mcdc016b
+    A2 [label="i_6 = 0;"];
+    A3 [label="if (a_8(D) > 5)"];
+    A4 [label=""];
+    A5 [label="k_9 = 0;"];
+    A6 [label="k_13 = k_3 + 1;"];
+    A7 [label="if (k_3 < b_10(D))"];
+    A8 [label="i_11 = i_2 + 1;"];
+    A9 [label="if (i_2 < a_8(D))"];
+    A10 [label="return;"];
+    A2 -> A9 [label="", color="black"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A5 [label="FALSE", color="red"];
+    A4 -> A10 [label="", color="black"];
+    A5 -> A7 [label="", color="black"];
+    A6 -> A7 [label="", color="black"];
+    A7 -> A6 [label="TRUE", color="blue"];
+    A7 -> A8 [label="FALSE", color="red"];
+    A8 -> A9 [label="", color="black"];
+    A9 -> A3 [label="TRUE", color="blue"];
+    A9 -> A10 [label="FALSE", color="red"];
+}

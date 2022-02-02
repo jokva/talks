@@ -1,0 +1,36 @@
+digraph { // mcdc007a
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+if (a) \{\l\
+\ \ \ \ if (b) x = 1;\l\
+\ \ \ \ else\ \ \ x = 2;\l\
+\}\l\
+else if (c) \{\l\
+\ \ \ \ if (d)\l\
+\ \ \ \ \ \ \ \ x = 3;\l\
+\}\l\
+"
+    ]
+
+    A2 [label="if (a != 0)"];
+    A3 [label="if (b != 0)"];
+    A4 [label="x = 1;"];
+    A5 [label="x = 2;"];
+    A6 [label="if (c != 0)"];
+    A7 [label="if (d != 0)"];
+    A8 [label="x = 3;"];
+    A9 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A6 [label="FALSE", color="red"];
+    A3 -> A4 [label="TRUE", color="blue"];
+    A3 -> A5 [label="FALSE", color="red"];
+    A4 -> A9 [label="", color="black"];
+    A5 -> A9 [label="", color="black"];
+    A6 -> A7 [label="TRUE", color="blue"];
+    A6 -> A9 [label="FALSE", color="red"];
+    A7 -> A8 [label="TRUE", color="blue"];
+    A7 -> A9 [label="FALSE", color="red"];
+    A8 -> A9 [label="", color="black"];
+}

@@ -1,0 +1,29 @@
+digraph { // mcdc008d
+
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+while ((a && (b \|\| c)) && d)\l\
+\ \ \ \ a = b = c = d = 0;\l\
+"
+    ]
+
+    A2 [label="", style = invis];
+    A3 [label="a = b;"];
+    A4 [label="if (a != 0)"];
+    A5 [label="if (b != 0)"];
+    A6 [label="if (c != 0)"];
+    A7 [label="if (d != 0)"];
+    A8 [label="return;"];
+    A2 -> A4 [label="", color="black", style = invis];
+    A3 -> A4 [label="", color="black"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A8 [label="FALSE", color="red"];
+    A5 -> A7 [label="TRUE", color="blue"];
+    A5 -> A6 [label="FALSE", color="red"];
+    A6 -> A7 [label="TRUE", color="blue"];
+    A6 -> A8 [label="FALSE", color="red"];
+    A7 -> A3 [label="TRUE", color="blue"];
+    A7 -> A8 [label="FALSE", color="red"];
+}

@@ -1,0 +1,26 @@
+digraph { // mcdc005a
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+if ((a && b) \|\| c)\l\
+\ \ \ \ x = 1;\l\
+else\l\
+\ \ \ \ x = 2;\l\
+"
+    ]
+    A2 [label="if (a != 0)"];
+    A3 [label="if (b != 0)"];
+    A4 [label="if (c != 0)"];
+    A5 [label="x = 1;"];
+    A6 [label="x = 2;"];
+    A7 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A4 [label="FALSE", color="red"];
+    A3 -> A5 [label="TRUE", color="blue"];
+    A3 -> A4 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A6 [label="FALSE", color="red"];
+    A5 -> A7 [label="", color="black"];
+    A6 -> A7 [label="", color="black"];
+}

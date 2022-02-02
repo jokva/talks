@@ -1,0 +1,31 @@
+digraph { // mcdc005b
+    // good masking example
+    code [
+        shape = record,
+        style = filled,
+        label = "\
+if ((a && (b \|\| c)) && d)\l\
+\ \ \ \ x = 1;\l\
+else\l\
+\ \ \ \ x = 2;\l\
+"
+    ]
+
+    A2 [label="if (a != 0)"];
+    A3 [label="if (b != 0)"];
+    A4 [label="if (c != 0)"];
+    A5 [label="if (d != 0)"];
+    A6 [label="x = 1;"];
+    A7 [label="x = 2;"];
+    A8 [label="return;"];
+    A2 -> A3 [label="TRUE", color="blue"];
+    A2 -> A7 [label="FALSE", color="red"];
+    A3 -> A5 [label="TRUE", color="blue"];
+    A3 -> A4 [label="FALSE", color="red"];
+    A4 -> A5 [label="TRUE", color="blue"];
+    A4 -> A7 [label="FALSE", color="red"];
+    A5 -> A6 [label="TRUE", color="blue"];
+    A5 -> A7 [label="FALSE", color="red"];
+    A6 -> A8 [label="", color="black"];
+    A7 -> A8 [label="", color="black"];
+}
