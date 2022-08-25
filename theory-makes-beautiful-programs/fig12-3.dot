@@ -1,0 +1,8 @@
+digraph {
+    a -> b;
+    a -> f;
+    b -> c;
+    b -> f [penwidth = 3];
+    c -> t;
+    c -> f [penwidth = 3];
+}

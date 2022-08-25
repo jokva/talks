@@ -1,0 +1,10 @@
+digraph {
+    a -> b;
+    a -> f;
+    b -> c;
+    b -> d;
+    c -> t;
+    c -> d;
+    d -> t;
+    d -> f;
+}

@@ -1,0 +1,6 @@
+digraph {
+    a -> b [taillabel = t, labeldistance = 2, labelangle = 30];
+    a -> f [taillabel = f, labeldistance = 2, labelangle = -30];
+    b -> t [taillabel = t, labeldistance = 2, labelangle = 30];
+    b -> f [taillabel = f, labeldistance = 2, labelangle = -30];
+}

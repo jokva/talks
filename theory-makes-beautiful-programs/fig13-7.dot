@@ -1,0 +1,15 @@
+digraph {
+    a -> b [color = gray];
+    a -> f;
+    b -> c [color = gray];
+    b -> d [color = gray];
+    c -> t [color = gray];
+    c -> d [color = gray];
+    d -> t [color = gray];
+    d -> f;
+
+    b [style = filled, fillcolor = lightblue];
+    c [style = filled, fillcolor = lightblue];
+    d [style = filled, fillcolor = lightblue];
+    t [style = filled, fillcolor = lightblue];
+}
