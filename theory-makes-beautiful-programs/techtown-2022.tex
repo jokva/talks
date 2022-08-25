@@ -1,0 +1,430 @@
+\documentclass[xcolor = {dvipsnames, table}]{beamer}
+
+\RequirePackage[english]{babel}
+\RequirePackage[utf8]{inputenc}
+
+\RequirePackage{fancyvrb}
+
+\RequirePackage{listings}
+\lstset{
+    language = C,
+    basicstyle = \ttfamily,
+}
+
+%Information to be included in the title page:
+\title{Theory makes beautiful programs}
+\author{Jørgen Kvalsvik}
+\date{01/09/2022}
+
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}
+    Modified condition/decision coverage (MC/DC)
+
+    \begin{itemize}
+        \item Why care about coverage?
+        \item How is it different from branch coverage?
+        \item What does maths have to do with it?
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    Why even care?
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \includegraphics[width = \textwidth]{img/bureaucrat.png}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \begin{itemize}
+                \item DO-178B/C (Level A)
+                \item ISO26262 (ASIL D)
+            \end{itemize}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\newcommand \rowhl {\rowcolor{Cyan!20}}
+
+\begin{frame}[fragile]
+    The problem with branch coverage
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}
+if ((a && b) || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                \rowhl  F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                        T & F & F & F \\
+                        T & F & T & T \\
+                        T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    Modified condition/decision coverage satisfied if:
+    \begin{itemize}
+        \item every entry and exit point has been invoked
+        \item every basic condition has taken on all possible outcomes
+        \item each basic condition has been shown to independently affect the
+              decision’s outcome
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{columns}
+        \begin{column}{0.7\textwidth}
+            \begin{itemize}
+                \item every entry and exit point has been invoked
+            \end{itemize}
+
+            Branch coverage (or decision coverage)
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                \rowhl  F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                        T & F & F & F \\
+                        T & F & T & T \\
+                        T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{columns}
+        \begin{column}{0.7\textwidth}
+            \begin{itemize}
+                \item every basic condition has taken on all possible outcomes
+            \end{itemize}
+
+            Condition coverage
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                        F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                        T & F & F & F \\
+                \rowhl  T & F & T & T \\
+                \rowhl  T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{columns}
+        \begin{column}{0.7\textwidth}
+            \begin{itemize}
+                \item each basic condition has been shown to
+                      \emph{independently} affect the decision’s outcome
+            \end{itemize}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                \rowhl  F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                \rowhl  T & F & F & F \\
+                        T & F & T & T \\
+                \rowhl  T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Testing all $2^N$ inputs would not give more information
+        \item Requires $N+1$ test cases
+        \item Can catch bad logic
+    \end{itemize}
+
+    % TODO: bad logic?
+\end{frame}
+
+\begin{frame}
+    MC/DC is \emph{awful} without tooling
+\end{frame}
+
+\begin{frame}[fragile]
+    I wrote a patch for gcc
+
+    \begin{Verbatim}[fontsize = \footnotesize]
+$ git log -n 1 --format=short --shortstat
+Author: Jørgen Kvalsvik <jorgen.kvalsvik@woven-planet.global>
+
+    Add condition coverage profiling
+
+21 files changed, 2952 insertions(+), 27 deletions(-)
+    \end{Verbatim}
+
+    \begin{Verbatim}[fontsize=\footnotesize]
+ gcc/tree-profile.cc |  +978
+    \end{Verbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Demo}
+        \begin{lstlisting}[language = sh, basicstyle = \scriptsize\ttfamily]
+$ gcc --coverage -fprofile-conditions
+    demo.c -o demo
+$ ./demo 0 0 0
+$ ./demo 0 0 1
+$ ./demo 1 0 0
+$ gcov --conditions demo
+$ cat demo.c.gcov
+
+    if ((a && b) || c) {
+condition outcomes covered 4/6
+condition  0 not covered (true)
+condition  1 not covered (true)
+        \end{lstlisting}
+    \end{block}
+
+    \begin{block}{Question}
+        Why is \lstinline{a = 1} not covered?
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item each basic condition has been shown to \emph{independently}
+              affect the decision’s outcome
+    \end{itemize}
+
+    \begin{block}{Definition}
+        A condition independently affects the outcome if changing it while
+        keeping the other values constant changes the outcome
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+    if ((a && b) || c) {
+        //
+    } else {
+        //
+    }
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                 \rowhl F & F & F & F \\
+                        F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                \rowhl  T & F & F & F \\
+                        T & F & T & T \\
+                        T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+    \begin{block}{Observation}
+        Changing \lstinline{a} does not change the decision.
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    This effect is called \emph{masking}
+
+    \begin{itemize}
+        \item \lstinline{* || true}
+        \item \lstinline{* && false}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Observation}
+        Reversing a boolean expression does not change its truth table
+    \end{block}
+
+    \begin{block}{Observation}
+        Masked conditions are \emph{short circuited} in the reversed expression
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \centering
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{(a && b) || c}
+            \begin{tabular}{c c c c}
+                a & b & c & \\
+                \hline
+                F & * & F & F \\
+                F & * & T & T \\
+                F & * & F & F \\
+                F & * & T & T \\
+
+                T & F & F & F \\
+                T & F & T & T \\
+                T & T & * & T \\
+                T & T & * & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{c || (b && A)}
+            \begin{tabular}{c c c c}
+                c & b & a & \\
+                \hline
+                F & F & * & F \\
+                F & F & * & F \\
+                F & T & F & F \\
+                F & T & T & T \\
+
+                T & * & * & T \\
+                T & * & * & T \\
+                T & * & * & T \\
+                T & * & * & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{(a && b) || c}
+            \begin{tabular}{c c c c}
+                a & b & c & \\
+                \hline
+                F & * & F & F \\
+                F & * & T & T \\
+                F & * & F & F \\
+                F & * & T & T \\
+
+                T & F & F & F \\
+                T & F & T & T \\
+                T & T & * & T \\
+                T & T & * & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{c || (b && a)}
+            \begin{tabular}{c c c c}
+                c & b & a & \\
+                \hline
+                F & F & - & F \\
+                T & - & - & T \\
+                F & T & F & F \\
+                T & - & - & T \\
+
+                F & F & - & F \\
+                T & - & - & T \\
+                F & T & T & T \\
+                T & - & - & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{(a && b) || c}
+            \begin{tabular}{c c c c}
+                a & b & c & \\
+                \hline
+                F & * & F & F \\
+                - & - & T & T \\
+                F & * & F & F \\
+                - & - & T & T \\
+
+                T & F & F & F \\
+                - & - & T & T \\
+                T & T & * & T \\
+                T & T & * & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+
+    \begin{block}{Note}
+        Row order in \lstinline{c || (b && a)} changed
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \centering\lstinline{(a && b) || c}
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \centering
+            \begin{tabular}{c c c c}
+                        a & b & c & \\
+                        \hline
+                \rowhl  F & * & F & F \\
+                \rowhl  - & - & T & T \\
+                        F & * & F & F \\
+                        - & - & T & T \\
+
+                \rowhl  T & F & F & F \\
+                        - & - & T & T \\
+                \rowhl  T & T & * & T \\
+                        T & T & * & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                \rowhl  F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                \rowhl  T & F & F & F \\
+                        T & F & T & T \\
+                \rowhl  T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\end{document}
