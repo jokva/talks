@@ -11,6 +11,20 @@
     basicstyle = \ttfamily,
 }
 
+% \set{}
+\RequirePackage{braket}
+
+\RequirePackage{amsmath}
+
+\RequirePackage{tikz}
+
+% for arrows inside listings
+\usetikzlibrary{decorations.text,calc}
+\newcommand{\tikzmark}[2]{%
+     \tikz[overlay,remember picture]%
+        \node[text=black, inner sep=2pt] (#1) {#2};%
+}
+
 %Information to be included in the title page:
 \title{Theory makes beautiful programs}
 \author{Jørgen Kvalsvik}
@@ -423,6 +437,246 @@ condition  1 not covered (true)
                 \rowhl  T & T & F & T \\
                         T & T & T & T \\
             \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Start solving for simple examples - a general solution
+            \emph{also} solves simple inputs, draw insights from these
+        \item For every added (failing) case, understand \emph{why} it failed
+            (i.e.  systematic properties)
+        \item Theory-backed programs almost self-materialize, easy to write
+        \item Russ Cox' Regular expressions can be simple and fast
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    // t
+} else {
+    // f
+}
+// e
+            \end{lstlisting}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+_a:
+  if (a) goto _b
+  else   goto _c
+_b:
+  if (b) goto _t
+  else   goto _c
+_c:
+  if (c) goto _t
+  else   goto _f
+_t:
+  goto _e
+_f:
+  goto _e
+_e:
+            \end{lstlisting}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    // t
+} else {
+    // f
+}
+// e
+            \end{lstlisting}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \resizebox{0.8\linewidth}{0.8\textheight}{
+                \includegraphics{graph/fig1.pdf}
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    Control flow graph
+
+    \begin{itemize}
+        \item Directed graph
+        \item Nodes are an uninterruptible sequence of instructions
+        \item Edges are next possible paths of execution
+        \item Edges are labelled fallthrough, true/false (conditional), complex
+        \item Fallthrough and conditional are mutually exclusive
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    First problem: finding decisions
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    // t
+} else {
+    // f
+}
+// e
+            \end{lstlisting}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \resizebox{0.8\linewidth}{0.8\textheight}{
+                \includegraphics{graph/fig2.pdf}
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{equation*}
+        \bigcup \set{Succ(v) \mid v \in B} = N[B]
+    \end{equation*}
+    \begin{equation*}
+        N[B] = B \cup O_B
+    \end{equation*}
+
+    \begin{tabular}{l l}
+        $B$    & is a decision (boolean expression) \\
+        $O_B$  & is the \emph{outcome} of $B$ \\
+        $N(B)$ & is the \emph{open neighborhood} of $B$ \\
+        $N[B]$ & is the \emph{closed neighborhood} of $B$ \\
+    \end{tabular}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[escapeinside={*@}{@*}, aboveskip = 5em]
+if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
+*@\tikzmark{then}{}@*
+} else {
+*@\tikzmark{else}{}@*
+}
+            \end{lstlisting}
+
+            \begin{tikzpicture}[overlay,remember picture]
+                \node (fst) at ($(fst) + (0.0em, +1.75ex)$) {};
+                \node (lst) at ($(lst) + (0.0em, +1.75ex)$) {};
+                \node (top) at ([yshift = 3em]$(fst)!0.5!(lst)$)
+                        {uninterruptible};
+                \draw [->] (top) to (fst);
+                \draw [->] (top) to (lst);
+
+                \node (then) at ($(then) + (5.0em, 0.0em)$) {};
+                \node (else) at ($(else) + (5.0em, 0.0em)$) {};
+                \node (out) at ($(then)!0.5!(else) + (5.0em, 0.0em)$) {outcome};
+
+                \draw [->] (out) to (then);
+                \draw [->] (out) to (else);
+            \end{tikzpicture}
+
+            \only<1>{
+                \begin{equation*}
+                    \bigcup \set{Succ(v) \mid v \in B}
+                \end{equation*}
+            }
+
+            \only<2>{
+                \begin{equation*}
+                    E(B) = \set{(u, v) \in E | u \in B, v \in N[B]}
+                \end{equation*}
+                All edges in $E(B)$ are conditional
+            }
+
+            \only<3>{
+                \begin{equation*}
+                    Succ(B_\Omega) = O_B
+                \end{equation*}
+            }
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \only<1-2>{
+                \resizebox{0.8\linewidth}{0.8\textheight}{
+                    \includegraphics{graph/fig3.pdf}
+                }
+            }
+            \only<3>{
+                \resizebox{0.8\linewidth}{0.8\textheight}{
+                    \includegraphics{graph/fig4.pdf}
+                }
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\newcommand{\anigraph}[2]{%
+    \only<#1>{
+        \resizebox{\linewidth}{\textheight}{
+            \includegraphics{graph/#2.pdf}
+        }
+    }
+}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    // t
+} else {
+    // f
+}
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \anigraph{1}{fig5-1}
+            \anigraph{2}{fig5-2}
+            \anigraph{3}{fig5-3}
+            \anigraph{4}{fig5-4}
+            \anigraph{5}{fig5-5}
+            \anigraph{6}{fig5-6}
+            \anigraph{7}{fig5-7}
+            \anigraph{8}{fig5-8}
+            \anigraph{9}{fig5-9}
+            \anigraph{10}{fig5-10}
+            \anigraph{11}{fig5-11}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if (a && b) {
+    if (c) {
+        // p
+    } else {
+        // q
+    }
+} else {
+    // r
+}
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \anigraph{1}{fig6-1}
+            \anigraph{2}{fig6-2}
+            \anigraph{3}{fig6-3}
+            \anigraph{4}{fig6-4}
+            \anigraph{6}{fig6-5}
         \end{column}
     \end{columns}
 \end{frame}

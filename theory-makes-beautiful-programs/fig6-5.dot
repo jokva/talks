@@ -1,0 +1,16 @@
+digraph {
+    a [style = filled, fillcolor = lightblue];
+    b [style = filled, fillcolor = lightblue];
+
+    r [style = filled, fillcolor = gray];
+
+    a -> b [];
+    a -> r [];
+    b -> c [penwidth = 3];
+    b -> r [];
+    c -> p [];
+    c -> q [];
+    p -> e [];
+    q -> e [];
+    r -> e [penwidth = 3];
+}

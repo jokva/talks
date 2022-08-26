@@ -11,13 +11,17 @@ stdenv.mkDerivation {
                       beamer
                       listings
                       hyperref
-
                       xcolor
+                      braket
+                      amsmath
+                      pgf # tikz
 
                       # build tools
                       latexmk
                       ;
                   })
+                  graphviz
+                  dot2tex
                 ];
   src = ./.;
   buildPhase = "make";
