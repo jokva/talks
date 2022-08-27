@@ -1,5 +1,8 @@
 \documentclass[xcolor = {dvipsnames, table}]{beamer}
 
+\definecolor{dotlightblue} {HTML}{ADD8E6}
+\definecolor{dotlightcoral}{HTML}{F08080}
+
 \RequirePackage[english]{babel}
 \RequirePackage[utf8]{inputenc}
 
@@ -606,12 +609,12 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
 
         \begin{column}{0.4\textwidth}
             \only<1-2>{
-                \resizebox{0.8\linewidth}{0.8\textheight}{
+                \resizebox{\linewidth}{0.8\textheight}{
                     \includegraphics{graph/fig3.pdf}
                 }
             }
             \only<3>{
-                \resizebox{0.8\linewidth}{0.8\textheight}{
+                \resizebox{\linewidth}{0.8\textheight}{
                     \includegraphics{graph/fig4.pdf}
                 }
             }
@@ -676,7 +679,171 @@ if (a && b) {
             \anigraph{2}{fig6-2}
             \anigraph{3}{fig6-3}
             \anigraph{4}{fig6-4}
-            \anigraph{6}{fig6-5}
+            \anigraph{5}{fig6-5}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if (a && b) {
+    if (c) {
+        // p
+    } else {
+        // q
+    }
+} else {
+    // r
+}
+            \end{lstlisting}
+            \begin{equation*}
+                C = (\textcolor{dotlightblue}{G}, \textcolor{dotlightcoral}{G'})
+            \end{equation*}
+            \begin{equation*}
+                \begin{split}
+                    \forall_e \in E(G) & \bullet cond(e) \\
+                    \Rightarrow & O_B \subset N[G] \\
+                    \Rightarrow & B \subseteq G
+                \end{split}
+            \end{equation*}
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \resizebox{\linewidth}{0.8\textheight}{
+                \includegraphics{graph/fig7.pdf}
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[
+                basicstyle = \footnotesize\ttfamily,
+                escapeinside={*@}{@*},
+                aboveskip = 5em,
+            ]
+if (*@\tikzmark{a}{}@*a && *@\tikzmark{b}{}@*b) {*@\tikzmark{open}{}@*
+    if (c) {*@\tikzmark{c}{}@*
+        // p*@\tikzmark{p}{}@*
+    } else {*@\tikzmark{right}{}@*
+        // q*@\tikzmark{q}{}@*
+    }
+} else {
+    // r*@\tikzmark{r}{}@*
+}
+*@\tikzmark{e}{}@*
+            \end{lstlisting}
+
+            \begin{tikzpicture}[overlay,remember picture]
+                \coordinate (top) at ($(b) + (2.0em, 2.0em)$) {};
+                \coordinate (right) at ($(right) + (+4.0em, 0.0em)$) {};
+                \node (a) at (a.{north east}) {};
+                \draw [->, blue]
+                    (a)     to [bend left = 30]
+                    (top)   to [bend left = 40]
+                    (right) to [bend left = 45]
+                    (r)
+                ;
+
+                \draw [->, blue]
+                    (a)                         to [bend left = 30]
+                    ($(top)  + (0em, 1em)$)     to [bend left = 60]
+                    ($(open) + (2em, 0em)$)     to [bend left = 40]
+                    (c.{north east})
+                ;
+
+                \node (b) at (b.{north east}) {};
+                \coordinate (top) at ($(top) + (2.0em, 0.0em)$) {};
+                \coordinate (right) at ($(right) + (+2.0em, 0.0em)$) {};
+                \draw [->, purple]
+                    (b)     to [bend left = 30]
+                    (top)   to [bend left = 40]
+                    (right) to [bend left = 60]
+                    (r.{south})
+                ;
+
+                \draw [->, purple]
+                    (b)                         to [bend left = 40]
+                    ($(top)  + (0em, 1em)$)     to [bend left = 60]
+                    ($(open) + (3em, 0em)$)     to [bend left = 40]
+                    (c.{east})
+                ;
+
+            \end{tikzpicture}
+            No path from \textbf{then} to \textbf{else}
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \resizebox{\linewidth}{0.8\textheight}{
+                \includegraphics{graph/fig8.pdf}
+            }
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[
+                basicstyle = \footnotesize\ttfamily,
+                escapeinside={*@}{@*},
+            ]
+if (a && b) {*@\tikzmark{top}{}@*
+    if (c) {
+        // p
+    } else {
+        // q
+    }
+} else {*@\tikzmark{bot}{}@*
+    // r
+}
+            \end{lstlisting}
+
+            \visible<2->{
+                \begin{tikzpicture}[overlay,remember picture]
+                    \node (top) at (top) {};
+                    \node (bot) at (bot) {};
+                    \node (mid) at ($(top)!0.5!(bot) + (+5.0em, 0.0em)$)
+                        {outcome};
+                    \draw [->] (mid) to (top);
+                    \draw [->] (mid) to (bot);
+                \end{tikzpicture}
+            }
+
+            \only<1-2>{
+                \begin{equation*}
+                    \begin{split}
+                        \forall_v \in then(B) \bullet B \subset A(v) \\
+                        \forall_v \in else(B) \bullet B \subset A(v) \\
+                    \end{split}
+                \end{equation*}
+
+            where $A(v)$ are the ancestors of $v$
+            }
+
+            \only<3>{
+                \begin{equation*}
+                    \begin{split}
+                        B &= A_G(v_T) = A_G(v_F) \\
+                          &= \bigcap \set { A_G(v) \mid v \in N(G)} \\
+                    \end{split}
+                \end{equation*}
+                where
+                \begin{tabular}{l}
+                    $A_G(v) = A(v) \cap G$ \\
+                    $\set{ v_T, v_F } = O_B$ \\
+                \end{tabular}
+            }
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \resizebox{\linewidth}{0.8\textheight}{
+                \includegraphics{graph/fig8.pdf}
+            }
         \end{column}
     \end{columns}
 \end{frame}

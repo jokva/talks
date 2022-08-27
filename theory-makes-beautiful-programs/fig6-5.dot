@@ -4,10 +4,12 @@ digraph {
 
     r [style = filled, fillcolor = gray];
 
+    c [style = filled, fillcolor = lightcoral];
+
     a -> b [];
     a -> r [];
     b -> c [penwidth = 3];
-    b -> r [];
+    b -> r [penwidth = 3];
     c -> p [];
     c -> q [];
     p -> e [];
