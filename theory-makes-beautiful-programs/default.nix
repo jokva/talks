@@ -8,6 +8,8 @@ stdenv.mkDerivation {
 
                       # Add other LaTeX libraries (packages) here as needed, e.g:
                       # stmaryrd amsmath pgf
+                      algorithms
+                      algorithmicx
                       beamer
                       listings
                       hyperref

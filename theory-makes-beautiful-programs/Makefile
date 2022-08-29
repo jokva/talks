@@ -35,6 +35,19 @@ graphs += graph/fig6-5.pdf
 graphs += graph/fig7.pdf
 graphs += graph/fig8.pdf
 
+graphs += graph/fig9-1.pdf
+graphs += graph/fig9-2.pdf
+graphs += graph/fig9-3.pdf
+graphs += graph/fig9-4.pdf
+graphs += graph/fig9-5.pdf
+
+graphs += graph/fig10-1.pdf
+graphs += graph/fig10-2.pdf
+
+graphs += graph/fig11-1.pdf
+graphs += graph/fig11-2.pdf
+
+
 $(DOCNAME).pdf: $(DOCNAME).tex $(graphs)
 	latexmk -shell-escape -pdf -pdflatex=$(PDFLATEX) -recorder -use-make $(DOCNAME).tex
 

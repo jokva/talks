@@ -28,6 +28,18 @@
         \node[text=black, inner sep=2pt] (#1) {#2};%
 }
 
+\RequirePackage{algorithm}
+\RequirePackage[noend]{algpseudocode}
+\algnewcommand \algorithmicin{\textbf{in}}
+\algnewcommand \In {\algorithmicin\ }
+\algrenewtext{ForAll}[2]%
+    {\algorithmicfor\ #1 \algorithmicin\ #2 \algorithmicdo}
+
+% reduce the size of the font in algorithms slightly
+\makeatletter
+\renewcommand{\ALG@beginalgorithmic}{\small}
+\makeatother
+
 %Information to be included in the title page:
 \title{Theory makes beautiful programs}
 \author{Jørgen Kvalsvik}
@@ -166,6 +178,7 @@ if ((a && b) || c) {
                 \item each basic condition has been shown to
                       \emph{independently} affect the decision’s outcome
             \end{itemize}
+            Modified condition/decision coverage
         \end{column}
 
         \begin{column}{0.3\textwidth}
@@ -294,8 +307,12 @@ condition  1 not covered (true)
 \end{frame}
 
 \begin{frame}
-    \begin{block}{Observation}
+    \begin{block}{Observation - commutation}
         Reversing a boolean expression does not change its truth table
+        \begin{align*}
+            (P \wedge Q) & \equiv (Q \wedge P) \\
+            (P \vee Q)   & \equiv (Q \vee P)   \\
+        \end{align*}
     \end{block}
 
     \begin{block}{Observation}
@@ -501,9 +518,7 @@ if ((a && b) || c) {
             \end{lstlisting}
         \end{column}
         \begin{column}{0.4\textwidth}
-            \resizebox{0.8\linewidth}{0.8\textheight}{
-                \includegraphics{graph/fig1.pdf}
-            }
+            \includegraphics[width = \linewidth, keepaspectratio]{graph/fig1.pdf}
         \end{column}
     \end{columns}
 \end{frame}
@@ -537,9 +552,7 @@ if ((a && b) || c) {
             \end{lstlisting}
         \end{column}
         \begin{column}{0.4\textwidth}
-            \resizebox{0.8\linewidth}{0.8\textheight}{
-                \includegraphics{graph/fig2.pdf}
-            }
+            \includegraphics[width = \linewidth, keepaspectratio]{graph/fig2.pdf}
         \end{column}
     \end{columns}
 \end{frame}
@@ -609,25 +622,29 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
 
         \begin{column}{0.4\textwidth}
             \only<1-2>{
-                \resizebox{\linewidth}{0.8\textheight}{
-                    \includegraphics{graph/fig3.pdf}
-                }
+                \includegraphics[
+                    width  = \linewidth,
+                    height = 0.8\textheight,
+                    keepaspectratio,
+                ]{graph/fig3.pdf}
             }
             \only<3>{
-                \resizebox{\linewidth}{0.8\textheight}{
-                    \includegraphics{graph/fig4.pdf}
-                }
+                \includegraphics[
+                    width  = \linewidth,
+                    height = 0.8\textheight,
+                    keepaspectratio,
+                ]{graph/fig4.pdf}
             }
         \end{column}
     \end{columns}
 \end{frame}
 
-\newcommand{\anigraph}[2]{%
-    \only<#1>{
-        \resizebox{\linewidth}{\textheight}{
-            \includegraphics{graph/#2.pdf}
-        }
-    }
+\newcommand{\includegraph}[2]{%
+    \includegraphics<#1>[
+        width  = \linewidth,
+        height = \textheight,
+        keepaspectratio,
+    ]{graph/#2.pdf}
 }
 
 \begin{frame}[fragile]
@@ -642,18 +659,18 @@ if ((a && b) || c) {
             \end{lstlisting}
         \end{column}
 
-        \begin{column}{0.5\textwidth}
-            \anigraph{1}{fig5-1}
-            \anigraph{2}{fig5-2}
-            \anigraph{3}{fig5-3}
-            \anigraph{4}{fig5-4}
-            \anigraph{5}{fig5-5}
-            \anigraph{6}{fig5-6}
-            \anigraph{7}{fig5-7}
-            \anigraph{8}{fig5-8}
-            \anigraph{9}{fig5-9}
-            \anigraph{10}{fig5-10}
-            \anigraph{11}{fig5-11}
+        \begin{column}{0.4\textwidth}
+            \includegraph{1}{fig5-1}
+            \includegraph{2}{fig5-2}
+            \includegraph{3}{fig5-3}
+            \includegraph{4}{fig5-4}
+            \includegraph{5}{fig5-5}
+            \includegraph{6}{fig5-6}
+            \includegraph{7}{fig5-7}
+            \includegraph{8}{fig5-8}
+            \includegraph{9}{fig5-9}
+            \includegraph{10}{fig5-10}
+            \includegraph{11}{fig5-11}
         \end{column}
     \end{columns}
 \end{frame}
@@ -675,18 +692,18 @@ if (a && b) {
         \end{column}
 
         \begin{column}{0.5\textwidth}
-            \anigraph{1}{fig6-1}
-            \anigraph{2}{fig6-2}
-            \anigraph{3}{fig6-3}
-            \anigraph{4}{fig6-4}
-            \anigraph{5}{fig6-5}
+            \includegraph{1}{fig6-1}
+            \includegraph{2}{fig6-2}
+            \includegraph{3}{fig6-3}
+            \includegraph{4}{fig6-4}
+            \includegraph{5}{fig6-5}
         \end{column}
     \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
     \begin{columns}
-        \begin{column}{0.5\textwidth}
+        \begin{column}{0.6\textwidth}
             \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
 if (a && b) {
     if (c) {
@@ -711,16 +728,18 @@ if (a && b) {
         \end{column}
 
         \begin{column}{0.4\textwidth}
-            \resizebox{\linewidth}{0.8\textheight}{
-                \includegraphics{graph/fig7.pdf}
-            }
+            \includegraphics[
+                width   = \linewidth,
+                height  = \textheight,
+                keepaspectratio,
+            ]{graph/fig7.pdf}
         \end{column}
     \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
     \begin{columns}
-        \begin{column}{0.5\textwidth}
+        \begin{column}{0.6\textwidth}
             \begin{lstlisting}[
                 basicstyle = \footnotesize\ttfamily,
                 escapeinside={*@}{@*},
@@ -778,19 +797,22 @@ if (*@\tikzmark{a}{}@*a && *@\tikzmark{b}{}@*b) {*@\tikzmark{open}{}@*
         \end{column}
 
         \begin{column}{0.4\textwidth}
-            \resizebox{\linewidth}{0.8\textheight}{
-                \includegraphics{graph/fig8.pdf}
-            }
+            \includegraphics[
+                width  = \linewidth,
+                height = \textheight,
+                keepaspectratio,
+            ]{graph/fig8.pdf}
         \end{column}
     \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
     \begin{columns}
-        \begin{column}{0.5\textwidth}
+        \begin{column}{0.6\textwidth}
             \begin{lstlisting}[
                 basicstyle = \footnotesize\ttfamily,
                 escapeinside={*@}{@*},
+                aboveskip = 1em,
             ]
 if (a && b) {*@\tikzmark{top}{}@*
     if (c) {
@@ -809,23 +831,20 @@ if (a && b) {*@\tikzmark{top}{}@*
                     \node (bot) at (bot) {};
                     \node (mid) at ($(top)!0.5!(bot) + (+5.0em, 0.0em)$)
                         {outcome};
-                    \draw [->] (mid) to (top);
-                    \draw [->] (mid) to (bot);
+                    \draw [->] (mid.{north west}) to (top);
+                    \draw [->] (mid.{south west}) to (bot);
                 \end{tikzpicture}
             }
 
-            \only<1-2>{
+            \alt<1-2>{
                 \begin{equation*}
                     \begin{split}
                         \forall_v \in then(B) \bullet B \subset A(v) \\
                         \forall_v \in else(B) \bullet B \subset A(v) \\
                     \end{split}
                 \end{equation*}
-
-            where $A(v)$ are the ancestors of $v$
-            }
-
-            \only<3>{
+                where $A(v)$ are the ancestors of $v$
+            }{
                 \begin{equation*}
                     \begin{split}
                         B &= A_G(v_T) = A_G(v_F) \\
@@ -841,9 +860,364 @@ if (a && b) {*@\tikzmark{top}{}@*
         \end{column}
 
         \begin{column}{0.4\textwidth}
-            \resizebox{\linewidth}{0.8\textheight}{
-                \includegraphics{graph/fig8.pdf}
+            \includegraphics[
+                width  = \linewidth,
+                height = \textheight,
+                keepaspectratio,
+            ]{graph/fig8.pdf}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{lstlisting}[
+                basicstyle = \footnotesize\ttfamily,
+            ]
+if (a && b) {
+    if (c) {
+        // p
+    } else {
+        // q
+    }
+} else {
+    // r
+}
+            \end{lstlisting}
+
+            \setbeamercovered{invisible}
+
+            % https://tex.stackexchange.com/questions/142672/uncovering-lines-in-an-equation-in-split-environment
+            \newcommand{\disponslide}[2]{%
+                \alt<#1>{#2}{\phantom{#2}}
             }
+            \begin{align*}
+                    \onslide<2->
+                    \disponslide{2-}{A(q)}  & \disponslide{2-}{= \set{c, b, a}} \\
+                    \disponslide{3-}{A(p)}  & \disponslide{3-}{= \set{c, b, a}} \\
+                    \disponslide{4-}{A(r)}  & \disponslide{4-}{= \set{b, a}   } \\
+                    \disponslide{5-}{B}     & \disponslide{5-}{= \bigcap \set{A(q), A(p), A(r)}} \\
+                    \disponslide{5-}{}      & \disponslide{5-}{= \set{a, b}} \\
+                    \disponslide{5-}{O_B}   & \disponslide{5-}{= \set{r, c}} \\
+            \end{align*}
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \includegraph{1}{fig9-1}
+            \includegraph{2}{fig9-2}
+            \includegraph{3}{fig9-3}
+            \includegraph{4}{fig9-4}
+            \includegraph{5-}{fig9-5}
+        \end{column}
+        \setbeamercovered{}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Problem}
+        BFS needs to start at left-most term $B_0$
+    \end{block}
+
+    \begin{block}{Solution}
+        Process program depth-first, mark when processed
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item If $v$ is fallthrough $\Rightarrow$ mark and continue
+        \item If $v$ is conditional $\Rightarrow$ is $B_0$ and $B$ are marked
+        \item If $v$ is marked $\Rightarrow$ continue
+    \end{itemize}
+
+    \begin{block}{Note}
+        May lead to expressions being processed "out of order"
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{When masking happens}
+        \lstinline{* || true}
+
+        \lstinline{* && false}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Observation}
+        Boolean expression are are isomorphic under the operator
+    \end{block}
+
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \includegraphics[
+                width   = \linewidth,
+                height  = 0.8\textheight,
+                keepaspectratio,
+            ]{graph/fig10-1.pdf}
+
+            \lstinline{a || b}
+        \end{column}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \includegraphics[
+                width   = \linewidth,
+                height  = 0.8\textheight,
+                keepaspectratio,
+            ]{graph/fig10-2.pdf}
+
+            \lstinline{a && b}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Proposition}
+        Boolean expression are are isomorphic under the operator
+    \end{block}
+
+    \begin{block}{Proof}
+        De Morgan's Laws
+        \begin{align*}
+            \neg(P \wedge Q) & \equiv \neg P \vee \neg Q \\
+            \neg(P \vee Q) & \equiv \neg P \wedge \neg Q \\
+        \end{align*}
+    \end{block}
+
+    \begin{block}{Implication}
+        We don't need to know the operator, only the graph shape
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{When masking happens (in CFG)}
+        When a value $c$ is changed (taking a different edge at $v_c$) and
+        we still end in the same outcome node
+    \end{block}
+
+    \lstinline{f = a || b}
+
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \centering
+            \includegraphics[
+                width  = \linewidth,
+                height = \textheight,
+                keepaspectratio,
+            ]{graph/fig11-1.pdf}
+            \lstinline{f 1 0}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \includegraphics[
+                width  = \linewidth,
+                height = \textheight,
+                keepaspectratio,
+            ]{graph/fig11-2.pdf}
+            \lstinline{f 1 1}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \includegraphics[
+                width  = \linewidth,
+                height = \textheight,
+                keepaspectratio,
+            ]{graph/fig11-3.pdf}
+        \lstinline{f 0 1}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Observation}
+        Masking happens at nodes with \emph{multiple} predecessors
+    \end{block}
+
+    \begin{block}{Implication}
+        Multiple predecessors means short circuiting edge
+    \end{block}
+
+    \begin{block}{Implication}
+        We know where to start searching
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Association}
+        \begin{align*}
+            P \wedge (Q \wedge R) & \equiv (P \wedge Q) \wedge R \\
+            P \vee (Q \vee R) & \equiv (P \vee Q) \vee R \\
+        \end{align*}
+    \end{block}
+
+    \begin{block}{Implication}
+        We can re-write expressions to an \emph{alternating} form
+
+        \begin{align*}
+            (A \vee B) \vee ((C \wedge D) \vee E) \\
+            A \vee B \vee (C \wedge D) \vee E     \\
+        \end{align*}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Observation}
+        Masking propagates until the operator changes
+    \end{block}
+
+    \begin{block}{}
+        \begin{equation*}
+            A \wedge (B \vee C \vee D)
+        \end{equation*}
+
+        $D = t$ masks $B$, $C$, but not $A$
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Subexpressions can mask}
+        \begin{equation*}
+            A \wedge (B \vee C)
+        \end{equation*}
+        $C = f$ masks $A$, but not $B$
+
+        \begin{equation*}
+            F = B \vee C
+        \end{equation*}
+        \begin{equation*}
+            A \wedge F
+        \end{equation*}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Observation}
+        The \emph{last term} $B_\Omega$ in a subexpression can short circuit in
+        the superexpression
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{equation*}
+            a \wedge b
+        \wedge
+            (c \vee d)
+        \wedge
+            e \wedge f
+        \wedge
+            (g
+            \vee
+                (h \wedge i)
+            \vee
+            j)
+        \wedge
+            k
+    \end{equation*}
+
+    \begin{tikzpicture}[node distance = 2em]
+        \node (o1)               {$\wedge$};
+        \node (o2) [below of=o1] {$\vee$};
+        \node (o3) [below of=o2] {$\wedge$};
+
+        \node (a)  [right of=o1] {$a$};
+        \node (b)  [right of=a]  {$b$};
+        \node (1)  [right of=b]  {};
+        \node (c)  [below of=1]  {$c$};
+        \node (d)  [right of=c]  {$d$};
+        \node (2)  [above of=d]  {};
+        \node (e)  [right of=2]  {$e$};
+        \node (f)  [right of=e]  {$f$};
+        \node (3)  [right of=f]  {};
+        \node (g)  [below of=3]  {$g$};
+        \node (4)  [right of=g]  {};
+        \node (h)  [below of=4]  {$h$};
+        \node (i)  [right of=h]  {$i$};
+        \node (6)  [right of=i]  {};
+        \node (j)  [above of=6]  {$j$};
+        \node (7)  [right of=j]  {};
+        \node (k)  [above of=7]  {$k$};
+        \node (x)  [right of=k]  {};
+
+        \only<2>{
+            \draw [->] (c.{north}) to [bend left  = 30] (e.{west});
+            \draw [->] (h.{north}) to [bend left  = 30] (j.{west});
+        }
+
+        \only<3>{
+            CONTINUE HERE
+            \draw [->] (d.{north}) to [bend left  = 30] (e.{west});
+        }
+    \end{tikzpicture}
+
+    \only<2>{
+        $c = true, h = true$
+    }
+
+    \only<3>{
+        $d = false$
+    }
+
+\end{frame}
+
+\begin{frame}
+    \begin{equation*}
+        Succ(B_\Omega) = O_B
+    \end{equation*}
+
+    \begin{block}{Observation}
+        \begin{itemize}
+            \item Either short-circuit right operands
+            \item Evaluate next operand
+        \end{itemize}
+    \end{block}
+
+    \begin{block}{Implication}
+        If one edge is a short circuiting edge, the other must be a masking
+        edge
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Problem}
+        Given a pair of incoming edges, which is masking and which is short
+        circuting?
+    \end{block}
+
+    \begin{block}{Requirement}
+        An ordering $v_n < v_m$ if $v_n$ is a left operand and $v_m$ is
+        a right operand in the same expression
+    \end{block}
+
+    \begin{block}{Solution}<2>
+        Topological sort
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    Given $\set{v_n, v_m} = Preds(v), v_n < v_m$ then
+    \begin{align*}
+        v_n &= S_\Omega \\
+        O_S &= Succ(v_n) \\
+    \end{align*}
+    where $S$ is a subexpression of $B$ ($S \subset B$)
+
+    \begin{block}{Implication}
+        When $(v_m, v)$ is taken, $S$ are masked
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{align*}
+                { v_n, v_m } &= Preds(v) \\
+                v_n &= S_\Omega \\
+                O_S &=  Succ(v_n)
+            \end{align*}
         \end{column}
     \end{columns}
 \end{frame}
