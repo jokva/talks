@@ -20,7 +20,6 @@
 \RequirePackage{amsmath}
 
 \RequirePackage{tikz}
-
 % for arrows inside listings
 \usetikzlibrary{decorations.text,calc}
 \newcommand{\tikzmark}[2]{%
@@ -30,20 +29,42 @@
 
 \RequirePackage{algorithm}
 \RequirePackage[noend]{algpseudocode}
+
 \algnewcommand \algorithmicin{\textbf{in}}
 \algnewcommand \In {\algorithmicin\ }
+\algnewcommand \algorithmiccontinue{\textbf{continue}}
+\algnewcommand \Continue {\State \algorithmiccontinue\ }
+\algnewcommand \algorithmicskip{\textbf{skip}}
+\algnewcommand \Skip {\State \algorithmicskip\ }
 \algrenewtext{ForAll}[2]%
     {\algorithmicfor\ #1 \algorithmicin\ #2 \algorithmicdo}
+\algnewcommand \SkipIf[1] {\State \algorithmicskip\ \algorithmicif\ #1}
 
 % reduce the size of the font in algorithms slightly
 \makeatletter
-\renewcommand{\ALG@beginalgorithmic}{\small}
+\renewcommand{\ALG@beginalgorithmic}{\footnotesize}
 \makeatother
+
+\AtBeginSection[]{
+    \begin{frame}
+        \vfill
+        \centering
+        \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+            \usebeamerfont{title}\insertsectionhead\par%
+        \end{beamercolorbox}
+        \vfill
+    \end{frame}
+}
+
+% https://tex.stackexchange.com/questions/142672/uncovering-lines-in-an-equation-in-split-environment
+\newcommand{\disponslide}[2]{%
+    \alt<#1>{#2}{\phantom{#2}}
+}
 
 %Information to be included in the title page:
 \title{Theory makes beautiful programs}
-\author{Jørgen Kvalsvik}
-\date{01/09/2022}
+\author{Jørgen Kvalsvik j@lambda.is}
+\date{31/08/2022}
 
 \begin{document}
 \frame{\titlepage}
@@ -57,7 +78,6 @@
         \item What does maths have to do with it?
     \end{itemize}
 \end{frame}
-
 
 \begin{frame}
     Why even care?
@@ -117,9 +137,17 @@ if ((a && b) || c) {
     \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.7\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
+
             \begin{itemize}
                 \item every entry and exit point has been invoked
             \end{itemize}
@@ -144,9 +172,16 @@ if ((a && b) || c) {
     \end{columns}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.7\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
             \begin{itemize}
                 \item every basic condition has taken on all possible outcomes
             \end{itemize}
@@ -171,9 +206,16 @@ if ((a && b) || c) {
     \end{columns}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.7\textwidth}
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
             \begin{itemize}
                 \item each basic condition has been shown to
                       \emph{independently} affect the decision’s outcome
@@ -204,12 +246,17 @@ if ((a && b) || c) {
         \item Requires $N+1$ test cases
         \item Can catch bad logic
     \end{itemize}
-
-    % TODO: bad logic?
 \end{frame}
 
 \begin{frame}
-    MC/DC is \emph{awful} without tooling
+    The problem with MC/DC
+
+    \begin{itemize}
+        \item Only tests implementation, not the spec
+        \item Possible to cheat
+        \item Needs many test cases in maybe uninteresting places
+        \item \emph{Awful} without tooling
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -293,7 +340,7 @@ condition  1 not covered (true)
     \end{columns}
 
     \begin{block}{Observation}
-        Changing \lstinline{a} does not change the decision.
+        Changing \lstinline{a} does not change the decision
     \end{block}
 \end{frame}
 
@@ -307,7 +354,7 @@ condition  1 not covered (true)
 \end{frame}
 
 \begin{frame}
-    \begin{block}{Observation - commutation}
+    \begin{block}{Commutation}
         Reversing a boolean expression does not change its truth table
         \begin{align*}
             (P \wedge Q) & \equiv (Q \wedge P) \\
@@ -347,15 +394,15 @@ condition  1 not covered (true)
             \begin{tabular}{c c c c}
                 c & b & a & \\
                 \hline
-                F & F & * & F \\
-                F & F & * & F \\
+                F & F & - & F \\
+                F & F & - & F \\
                 F & T & F & F \\
                 F & T & T & T \\
 
-                T & * & * & T \\
-                T & * & * & T \\
-                T & * & * & T \\
-                T & * & * & T \\
+                T & - & - & T \\
+                T & - & - & T \\
+                T & - & - & T \\
+                T & - & - & T \\
             \end{tabular}
         \end{column}
     \end{columns}
@@ -462,15 +509,127 @@ condition  1 not covered (true)
 \end{frame}
 
 \begin{frame}
-    \begin{itemize}
-        \item Start solving for simple examples - a general solution
-            \emph{also} solves simple inputs, draw insights from these
-        \item For every added (failing) case, understand \emph{why} it failed
-            (i.e.  systematic properties)
-        \item Theory-backed programs almost self-materialize, easy to write
-        \item Russ Cox' Regular expressions can be simple and fast
-    \end{itemize}
+    \begin{block}{Bad logic}
+        \begin{tabular}{l l}
+            Specification  & \texttt{(a \&\& b)\quad || c} \\
+            Implementation & \texttt{(a \&\& !c) || c} \\
+        \end{tabular}
+    \end{block}
 \end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \centering
+            Masking table
+            \begin{tabular}{c c c c}
+                        a & b & c & \\
+                        \hline
+                        F & * & F & F \\
+                        - & - & T & T \\
+                        F & * & F & F \\
+                        - & - & T & T \\
+
+                        T & F & F & F \\
+                        - & - & T & T \\
+                        T & T & * & T \\
+                        T & T & * & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \centering
+            \lstinline{(a && !c) || c}
+            \begin{tabular}{c c c c}
+                        a & !c & c & \\
+                        \hline
+                        F & * & F & F \\
+                        - & - & T & T \\
+                        F & * & F & F \\
+                        - & - & T & T \\
+
+                        T & T & * & T \\
+                        - & - & T & T \\
+                        T & T & * & T \\
+                        T & T & * & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+    Cheating MC/DC
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+if ((a && b) || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
+
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{lstlisting}[basicstyle = \footnotesize\ttfamily]
+int ab = a && b;
+if (ab || c) {
+    //
+} else {
+    //
+}
+            \end{lstlisting}
+        \end{column}
+    \end{columns}
+
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tabular}{c c c c}
+                        a & b & c \\
+                        \hline
+                \rowhl  F & F & F & F \\
+                \rowhl  F & F & T & T \\
+                        F & T & F & F \\
+                        F & T & T & T \\
+                \rowhl  T & F & F & F \\
+                        T & F & T & T \\
+                \rowhl  T & T & F & T \\
+                        T & T & T & T \\
+            \end{tabular}
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \centering
+            \begin{tabular}{c c}
+                        ab & c \\
+                        \hline
+                 \rowhl F & F \\
+                        F & T \\
+                 \rowhl T & F \\
+                 \rowhl T & T \\
+            \end{tabular}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Writing beautiful programs}
+        \begin{itemize}
+            \item Start solving for simple examples - a general solution
+                \emph{also} solves simple inputs, draw insights from these
+            \item For every added (failing) case, understand \emph{why} it failed
+            \item Theory-based programs almost self-materialize, easy to write
+            \item Regular Expression Matching Can Be Simple And Fast (Russ Cox)
+            \item In gcc: a bunch of (mostly) simple relationships put together
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\section{Basic compiler internals}
 
 \begin{frame}[fragile]
     \begin{columns}
@@ -535,10 +694,7 @@ if ((a && b) || c) {
     \end{itemize}
 \end{frame}
 
-\begin{frame}
-    First problem: finding decisions
-\end{frame}
-
+\section{Inferring decisions}
 \begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.4\textwidth}
@@ -647,6 +803,10 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
     ]{graph/#2.pdf}
 }
 
+\begin{frame}
+    Reachable-by-condition-edge
+\end{frame}
+
 \begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.4\textwidth}
@@ -673,6 +833,29 @@ if ((a && b) || c) {
             \includegraph{11}{fig5-11}
         \end{column}
     \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{algorithmic}[1]
+        \Function{reach}{$v_0, v_p$}
+            \State $R \gets \set{}$
+            \State $Q \gets$ \Call {queue}{$v_0$}
+
+            \Repeat
+                \State $v \gets$ \Call {pop}{$Q$}
+                \ForAll {$s$}{$Succs(v)$}
+                    \SkipIf {$s \in R$}
+                    \SkipIf {\Call {is-same}{$s, v_p$}}
+                    \SkipIf {\Call {is-back-edge}{$v, s$}}
+                    \SkipIf {$\neg$ \Call {dominated-by}{$s, v_0$}}
+                    \SkipIf {$\neg$ \Call {is-conditional}{$s$}}
+                    \State \Call {enqueue} {Q, $s$}
+                    \State \Call {add}{$R, s$}
+                \EndFor
+            \Until{\Call {empty}{$Q$}}
+            \State \Return $R$
+        \EndFunction
+    \end{algorithmic}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -845,12 +1028,10 @@ if (a && b) {*@\tikzmark{top}{}@*
                 \end{equation*}
                 where $A(v)$ are the ancestors of $v$
             }{
-                \begin{equation*}
-                    \begin{split}
-                        B &= A_G(v_T) = A_G(v_F) \\
-                          &= \bigcap \set { A_G(v) \mid v \in N(G)} \\
-                    \end{split}
-                \end{equation*}
+                \begin{align*}
+                    B &= A_G(v_T) = A_G(v_F) \\
+                        &= \bigcap \set { A_G(v) \mid v \in N(G)} \\
+                \end{align*}
                 where
                 \begin{tabular}{l}
                     $A_G(v) = A(v) \cap G$ \\
@@ -888,10 +1069,6 @@ if (a && b) {
 
             \setbeamercovered{invisible}
 
-            % https://tex.stackexchange.com/questions/142672/uncovering-lines-in-an-equation-in-split-environment
-            \newcommand{\disponslide}[2]{%
-                \alt<#1>{#2}{\phantom{#2}}
-            }
             \begin{align*}
                     \onslide<2->
                     \disponslide{2-}{A(q)}  & \disponslide{2-}{= \set{c, b, a}} \\
@@ -922,9 +1099,7 @@ if (a && b) {
     \begin{block}{Solution}
         Process program depth-first, mark when processed
     \end{block}
-\end{frame}
 
-\begin{frame}
     \begin{itemize}
         \item If $v$ is fallthrough $\Rightarrow$ mark and continue
         \item If $v$ is conditional $\Rightarrow$ is $B_0$ and $B$ are marked
@@ -935,6 +1110,80 @@ if (a && b) {
         May lead to expressions being processed "out of order"
     \end{block}
 \end{frame}
+
+\begin{frame}
+    \begin{algorithmic}[1]
+        \Function{find-decision}{$v_0, v_p$}
+            \State $G \gets$ \Call {reach}{$v_0, v_p$}
+            \If {$|G| = 1$}
+                \State \Return $G$
+            \EndIf
+
+            \State $B \gets G$
+            \ForAll{$n$}{$N(G)$}
+                \State $P \gets \set{}$
+                \ForAll{$v$}{$Preds(n)$}
+                    \State $P \gets P\ \cup$ $A_G(v)$
+                \EndFor
+                \State $B \gets B \cap P$
+            \EndFor
+
+            \State \Return $B$
+        \EndFunction
+    \end{algorithmic}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{lstlisting}[
+        basicstyle = \scriptsize\ttfamily,
+        language = c++,
+    ]
+cond_reachable_from (p, post, reachable, G);
+if (G.length () == 1) {
+    out.safe_push (p);
+    return;
+}
+
+neighborhood (G, reachable, NG);
+bitmap_copy (expr, reachable);
+
+for (const basic_block neighbor : NG) {
+    bitmap_clear (ancestors);
+    for (edge e : neighbor->preds)
+        ancestors_of (e->src, p, reachable, ancestors);
+    bitmap_and (expr, expr, ancestors);
+}
+
+for (const basic_block b : G)
+    if (bitmap_bit_p (expr, b->index))
+        out.safe_push (b);
+out.sort (cmp_index_map, &ctx.index_map);
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+    \begin{algorithmic}[1]
+        \Function{find-all-decisions}{$G$}
+            \State $R \gets \set{}$
+
+            \For {$v_0 \gets$ \Call {depth-first}{$G$}}
+                \SkipIf {\Call {marked}{$v_0$}}
+
+                \If {\Call {is-conditional}{$v_0$}}
+                    \State $v_p \gets$ \Call {get-post-dominator}{$v_0$}
+                    \State $B \gets$ \Call {find-decision}{$v_0, v_p$}
+                    \State \Call {add}{$R, B$}
+                    \State \Call {mark}{$B$}
+                \Else
+                    \State \Call {mark}{$v_0$}
+                \EndIf
+            \EndFor
+            \State \Return $R$
+        \EndFunction
+    \end{algorithmic}
+\end{frame}
+
+\section{Computing the masking vector}
 
 \begin{frame}[fragile]
     \begin{block}{When masking happens}
@@ -1096,7 +1345,7 @@ if (a && b) {
 
 \begin{frame}
     \begin{block}{Observation}
-        The \emph{last term} $B_\Omega$ in a subexpression can short circuit in
+        The \emph{last term} $S_\Omega$ in a subexpression can short circuit
         the superexpression
     \end{block}
 \end{frame}
@@ -1148,8 +1397,15 @@ if (a && b) {
         }
 
         \only<3>{
-            CONTINUE HERE
             \draw [->] (d.{north}) to [bend left  = 30] (e.{west});
+        }
+
+        \only<4-5>{
+            \draw [->] (d.{north}) to [bend left  = 45] (x.{north west});
+        }
+        \only<5>{
+            \draw [->] (d.{north}) to [bend right = 45] (a.{north east});
+            \draw [->] (d.{north}) to [bend right = 30] (b.{east});
         }
     \end{tikzpicture}
 
@@ -1158,6 +1414,10 @@ if (a && b) {
     }
 
     \only<3>{
+        $d = true$
+    }
+
+    \only<4-5>{
         $d = false$
     }
 
@@ -1169,8 +1429,9 @@ if (a && b) {
     \end{equation*}
 
     \begin{block}{Observation}
+        On evaluating a condition; either
         \begin{itemize}
-            \item Either short-circuit right operands
+            \item Short-circuit right operands
             \item Evaluate next operand
         \end{itemize}
     \end{block}
@@ -1216,10 +1477,176 @@ if (a && b) {
             \begin{align*}
                 { v_n, v_m } &= Preds(v) \\
                 v_n &= S_\Omega \\
-                O_S &=  Succ(v_n)
+                O_S &=  Succ(v_n) \\
             \end{align*}
         \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \begin{block}{Remember}
+                \begin{align*}
+                    N[B] &= \bigcup \set{Succ(v) \mid v \in B} \\
+                    N(B) &= O_B \\
+                \end{align*}
+            \end{block}
+
+            Everything that applies to the superexpression $B$ applies to the
+            subexpression $S$
+        \end{column}
     \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Problem}
+        Given a node $v$ with $|Preds(v)| > 2$, find the nodes masked when
+        taking an edge to $v$
+    \end{block}
+
+    \begin{block}{Intermediate problem}
+        There can be more than one masking edge
+    \end{block}
+
+    \begin{block}{Solution}
+        \begin{equation*}
+            \set{(v_n, v_m) \in Preds(v) \times Preds(v) \mid v_n < v_m}
+        \end{equation*}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{equation*}
+                \set{(v_n, v_m) \in Preds(v)^2 \mid v_n < v_m}
+            \end{equation*}
+            \lstinline{a && b && c}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \includegraph{1}{fig12-1}
+            \includegraph{2}{fig12-2}
+            \includegraph{3}{fig12-3}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Remember}
+        \begin{align*}
+            N[S] &= \bigcup \set{Succ(v) \mid v \in S} \\
+            N(S) &= O_S \\
+        \end{align*}
+    \end{block}
+    \begin{block}{Implication}
+        \begin{align*}
+            Succs(v_k) \subset S_n & \Rightarrow S_{n+1} = S_n \cup
+            \set{v_k} \\
+            S_0 &= O_S \\
+            S   &= S^f - S_0 \\
+        \end{align*}
+        where $S^f$ is the fixed point where $S_{n+1} = S_n$
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.4\textwidth}
+            \lstinline{A && ((B && C) || D)}
+            \begin{block}{}<3->
+                \begin{tabular}{l l}
+                    $(c, t)$ & short circuits \\
+                    $(d, t)$ & masks \\
+                    $c < d$ \\
+                \end{tabular}
+            \end{block}
+            \begin{block}{}
+                \begin{align*}
+                    \disponslide{4-}{S_\Omega} & \disponslide{4-}{= c} \\
+                    \disponslide{4-}{O_S} & \disponslide{4-}{= Succ(c) = \set{d, t}}  \\
+                    \disponslide{5-}{S_0} & \disponslide{5-}{= d, t} \\
+                    \disponslide{6-}{S_1} & \disponslide{6-}{= S_0 + c = \set{d, t, c}} \\
+                    \disponslide{7-}{S_2} & \disponslide{7-}{= S_1 + b = \set{d, t, c}} \\
+                    \disponslide{8-}{S}   & \disponslide{8-}{= S_2 - O_S} \\
+                    \disponslide{8-}{S}   & \disponslide{8-}{=\set{a, b}} \\
+                \end{align*}
+            \end{block}
+        \end{column}
+
+        \begin{column}{0.4\textwidth}
+            \includegraph{1}{fig13-1}
+            \includegraph{2}{fig13-2}
+            \includegraph{3}{fig13-3}
+            \includegraph{4}{fig13-4}
+            \includegraph{5}{fig13-5}
+            \includegraph{6}{fig13-6}
+            \includegraph{7}{fig13-7}
+            \includegraph{8-}{fig13-8}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+      \begin{algorithmic}[1]
+      \Function{masking-vector}{$B$}
+          \State $M \gets \set{}$
+          \ForAll {$b$}{$B \cup O_B$}
+              \ForAll{$(u, v)$}{$\set{(u, v) \mid Pred(b)^2, u < v}$}
+                  \State $Q \gets$ \Call {queue}{$u$}
+                  \State \Call {mark}{$Succ(u)$}
+
+                  \Repeat
+                      \State $q \gets$ \Call {pop}{$Q$}
+                      \SkipIf {\Call {marked}{$Succ(q)$}}
+                      \State \Call {mark}{$q$}
+                      \State \Call {add}{$M(v, b), q$}
+
+                      \ForAll {$p$}{$Pred(q)$}
+                          \SkipIf {$\neg$ \Call {is-conditional} {$p$}}
+                          \SkipIf {\Call {is-back-edge}{$q, p$}}
+                          \SkipIf {\Call {marked}{$p$}}
+                          \SkipIf {$p \not \in B$}
+                          \State \Call {enqueue}{$Q, p$}
+                      \EndFor
+
+                  \Until {\Call {empty}{Q}}
+              \EndFor
+          \EndFor
+          \State \Return $M$
+      \EndFunction
+  \end{algorithmic}
+\end{frame}
+
+\section{Consequences and drawbacks}
+
+\begin{frame}
+    \begin{block}{The good}
+        \begin{itemize}
+            \item Middle-end useful for several languages
+            \item Picks up on implicit conditionals like checked arrays
+            \item Consistent with gcov branch coverage
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{The bad}
+        \begin{itemize}
+            \item Sensitive to CFG construction
+            \item Picks up on implicit conditionals like checked arrays
+            \item Some expressions are indistinguishable
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{The beautiful}
+        \begin{itemize}
+            \item Higher confidence in correctness
+            \item Programs become "higher level"
+            \item Very strong documentation-of-intent, malleable
+            \item Fast to complete
+        \end{itemize}
+    \end{block}
 \end{frame}
 
 \end{document}

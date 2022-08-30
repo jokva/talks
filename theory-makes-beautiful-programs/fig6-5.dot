@@ -4,7 +4,10 @@ digraph {
 
     r [style = filled, fillcolor = gray];
 
-    c [style = filled, fillcolor = lightcoral];
+    c [
+        fillcolor = red,
+        style = filled,
+    ];
 
     a -> b [];
     a -> r [];
