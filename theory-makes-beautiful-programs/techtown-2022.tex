@@ -21,7 +21,8 @@
 
 \RequirePackage{tikz}
 % for arrows inside listings
-\usetikzlibrary{decorations.text,calc}
+\usetikzlibrary{decorations.text, calc}
+\usetikzlibrary{positioning, matrix, arrows.meta}
 \newcommand{\tikzmark}[2]{%
      \tikz[overlay,remember picture]%
         \node[text=black, inner sep=2pt] (#1) {#2};%
@@ -1433,7 +1434,6 @@ out.sort (cmp_index_map, &ctx.index_map);
     \only<4->{
         $d = false$
     }
-
 \end{frame}
 
 \begin{frame}
@@ -1660,6 +1660,75 @@ out.sort (cmp_index_map, &ctx.index_map);
             \item Very strong documentation-of-intent, malleable
             \item Fast to complete programs
         \end{itemize}
+    \end{block}
+\end{frame}
+
+\section{Act III: Instrumentation}
+
+\begin{frame}
+    Instrumentation must be fast
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Remember}
+        There is an ordering $v_n < v_m$ if $v_n$ is a left operand and $v_m$ is
+        a right operand in the same expression
+    \end{block}
+
+    \begin{block}{Implication}
+        We can sort $B$
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{block}{Global accumulators}
+        \begin{tikzpicture}
+            \matrix (T) [
+                matrix of nodes,
+                nodes={draw, minimum size=8mm},
+                column sep=-\pgflinewidth,
+                label = left:true,
+            ]{
+                0 &
+                \alt<1-4>{0}{1} &
+                0 &
+                \alt<1-2>{0}{1} \\
+            };
+            \matrix (F) [
+                matrix of nodes,
+                nodes={draw, minimum size=8mm},
+                column sep=-\pgflinewidth,
+                label = left:false,
+                below of = T
+            ]{
+                0 &
+                \alt<1-2>{0}{1} &
+                \alt<1-4>{0}{1} &
+                \alt<1-3>{0}{1} \\
+            };
+
+            \coordinate (anchor) at ($(T)!0.5!(F) + (+5.0em, 0.0em)$) {};
+            \node (a) [node distance = 1.5em, right of=anchor] {\ttfamily (a};
+            \node (1) [node distance = 1.5em, right of=a]      {\ttfamily and};
+            \node (b) [node distance = 1.5em, right of=1]      {\ttfamily b)};
+            \node (2) [node distance = 1.5em, right of=b]      {\ttfamily or};
+            \node (c) [node distance = 1.5em, right of=2]      {\ttfamily c};
+
+            \onslide<2->{
+                \draw [->] (c.{north}) to [bend right = 60] (T-1-2.{north});
+                \draw [->] (c.{south}) to [bend left  = 60] (F-1-2.{south});
+                \draw [->] (b.{north}) to [bend right = 60] (T-1-3.{north});
+                \draw [->] (b.{south}) to [bend left  = 60] (F-1-3.{south});
+                \draw [->] (a.{north}) to [bend right = 45] (T-1-4.{north});
+                \draw [->] (a.{south}) to [bend left  = 45] (F-1-4.{south});
+            }
+        \end{tikzpicture}
+
+        \begin{tabular}{l}
+            \visible<3->{\lstinline{f 0 0 1}} \\
+            \visible<4->{\lstinline{f 0 0 0}} \\
+            \visible<5->{\lstinline{f 1 0 0}} \\
+        \end{tabular}
     \end{block}
 \end{frame}
 
