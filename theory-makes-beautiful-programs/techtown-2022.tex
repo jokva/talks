@@ -1678,6 +1678,10 @@ out.sort (cmp_index_map, &ctx.index_map);
     \begin{block}{Implication}
         We can sort $B$
     \end{block}
+
+    \begin{block}{Implication}
+        There is a bijection $f: B \rightarrow \mathbb{N}$
+    \end{block}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -1730,6 +1734,68 @@ out.sort (cmp_index_map, &ctx.index_map);
             \visible<5->{\lstinline{f 1 0 0}} \\
         \end{tabular}
     \end{block}
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Local accumulators}
+        \begin{align*}
+            acc & \gets acc \cup B(E(u, v)) \\
+            acc & \gets acc \cap M(E(u, v)) \\
+        \end{align*}
+
+        where $E(u, v)$ is the edge taken and $M(E)$ are nodes masked for $E$
+    \end{block}
+
+    \begin{block}{Remember}
+        There is bijection $f: B \rightarrow \mathbb{N}$
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \centering
+    \lstinline{a || b}
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \begin{lstlisting}[language=C, basicstyle=\small\ttfamily]
+_prelude_fn:
+  _t = {0}
+  _f = {0}
+_a:
+  if (a)
+    _t |= 0x01
+    goto _T
+  else
+    _f |= 0x01
+    goto _b
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+        \begin{lstlisting}[language=C, basicstyle=\small\ttfamily]
+_b:
+  if (b)
+    _t &= 0x01
+    _f &= 0x01
+    _t |= 0x02
+    goto _T
+  else
+    _f |= 0x02
+    goto _F
+        \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.3\textwidth}
+            \begin{lstlisting}[language=C, basicstyle=\small\ttfamily]
+_T:
+  goto _E
+_F:
+  goto _E
+_E:
+  _fn_t |= _t
+  _fn_f |= _f
+        \end{lstlisting}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}[fragile]
