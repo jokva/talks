@@ -1,11 +1,11 @@
 digraph {
     a -> b;
     a -> f;
-    b -> c [style = invis];
-    b -> d [style = invis];
-    c -> t [style = invis];
-    c -> d [style = invis];
-    d -> t [style = invis];
+    b -> c [color = gray];
+    b -> d [color = gray];
+    c -> t [color = gray];
+    c -> d [color = gray];
+    d -> t [color = gray];
     d -> f;
 
     c [style = filled, fillcolor = lightblue];

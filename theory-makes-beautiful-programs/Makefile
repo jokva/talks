@@ -51,6 +51,7 @@ graphs += graph/fig11-3.pdf
 graphs += graph/fig12-1.pdf
 graphs += graph/fig12-2.pdf
 graphs += graph/fig12-3.pdf
+graphs += graph/fig12-4.pdf
 
 graphs += graph/fig13-1.pdf
 graphs += graph/fig13-2.pdf

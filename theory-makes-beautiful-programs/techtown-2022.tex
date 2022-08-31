@@ -262,18 +262,22 @@ if ((a && b) || c) {
 \begin{frame}[fragile]
     I wrote a patch for gcc
 
-    \begin{Verbatim}[fontsize = \footnotesize]
+    \begin{block}{}
+        \begin{Verbatim}[fontsize = \footnotesize]
 $ git log -n 1 --format=short --shortstat
 Author: Jørgen Kvalsvik <jorgen.kvalsvik@woven-planet.global>
 
     Add condition coverage profiling
 
 21 files changed, 2952 insertions(+), 27 deletions(-)
-    \end{Verbatim}
+        \end{Verbatim}
+    \end{block}
 
-    \begin{Verbatim}[fontsize=\footnotesize]
+    \begin{block}{}
+        \begin{Verbatim}[fontsize=\footnotesize]
  gcc/tree-profile.cc |  +978
-    \end{Verbatim}
+        \end{Verbatim}
+    \end{block}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -390,7 +394,7 @@ condition  1 not covered (true)
 
         \begin{column}{0.3\textwidth}
             \centering
-            \lstinline{c || (b && A)}
+            \lstinline{c || (b && a)}
             \begin{tabular}{c c c c}
                 c & b & a & \\
                 \hline
@@ -629,7 +633,7 @@ if (ab || c) {
     \end{block}
 \end{frame}
 
-\section{Basic compiler internals}
+\section{Control flow graphs}
 
 \begin{frame}[fragile]
     \begin{columns}
@@ -683,18 +687,18 @@ if ((a && b) || c) {
 \end{frame}
 
 \begin{frame}
-    Control flow graph
-
-    \begin{itemize}
-        \item Directed graph
-        \item Nodes are an uninterruptible sequence of instructions
-        \item Edges are next possible paths of execution
-        \item Edges are labelled fallthrough, true/false (conditional), complex
-        \item Fallthrough and conditional are mutually exclusive
-    \end{itemize}
+    \begin{block}{Control flow graph}
+        \begin{itemize}
+            \item Directed graph
+            \item Nodes are an uninterruptible sequence of instructions
+            \item Edges are next possible paths of execution
+            \item Edges are labelled fallthrough, true/false (conditional), complex
+            \item Fallthrough and conditional are mutually exclusive
+        \end{itemize}
+    \end{block}
 \end{frame}
 
-\section{Inferring decisions}
+\section{Act I: Inferring decisions}
 \begin{frame}[fragile]
     \begin{columns}
         \begin{column}{0.4\textwidth}
@@ -774,6 +778,15 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
                     Succ(B_\Omega) = O_B
                 \end{equation*}
             }
+
+            \only<4>{
+                Can not goto the middle of an \emph{expression}
+
+                \begin{tikzpicture}[overlay,remember picture]
+                    \node (nogoto) at ($(else) + (0.0em, -2.0em)$) {no goto};
+                    \draw [->] (nogoto) to ($(fst)!0.5!(lst) + (0.0em, -2.0em)$);
+                \end{tikzpicture}
+            }
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -784,7 +797,7 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
                     keepaspectratio,
                 ]{graph/fig3.pdf}
             }
-            \only<3>{
+            \only<3->{
                 \includegraphics[
                     width  = \linewidth,
                     height = 0.8\textheight,
@@ -804,7 +817,7 @@ if (*@\tikzmark{fst}{}@*(a && b) || c*@\tikzmark{lst}{}@*) {
 }
 
 \begin{frame}
-    Reachable-by-condition-edge
+    Reachable-by-condition-edge (BFS)
 \end{frame}
 
 \begin{frame}[fragile]
@@ -1183,7 +1196,7 @@ out.sort (cmp_index_map, &ctx.index_map);
     \end{algorithmic}
 \end{frame}
 
-\section{Computing the masking vector}
+\section{Act II: The masking vector}
 
 \begin{frame}[fragile]
     \begin{block}{When masking happens}
@@ -1391,19 +1404,19 @@ out.sort (cmp_index_map, &ctx.index_map);
         \node (k)  [above of=7]  {$k$};
         \node (x)  [right of=k]  {};
 
-        \only<2>{
+        \onslide<2>{
             \draw [->] (c.{north}) to [bend left  = 30] (e.{west});
             \draw [->] (h.{north}) to [bend left  = 30] (j.{west});
         }
 
-        \only<3>{
+        \onslide<3>{
             \draw [->] (d.{north}) to [bend left  = 30] (e.{west});
         }
 
-        \only<4-5>{
+        \onslide<4-5>{
             \draw [->] (d.{north}) to [bend left  = 45] (x.{north west});
         }
-        \only<5>{
+        \onslide<5>{
             \draw [->] (d.{north}) to [bend right = 45] (a.{north east});
             \draw [->] (d.{north}) to [bend right = 30] (b.{east});
         }
@@ -1448,7 +1461,7 @@ out.sort (cmp_index_map, &ctx.index_map);
         circuting?
     \end{block}
 
-    \begin{block}{Requirement}
+    \begin{block}{Implication}
         An ordering $v_n < v_m$ if $v_n$ is a left operand and $v_m$ is
         a right operand in the same expression
     \end{block}
@@ -1497,7 +1510,7 @@ out.sort (cmp_index_map, &ctx.index_map);
 
 \begin{frame}
     \begin{block}{Problem}
-        Given a node $v$ with $|Preds(v)| > 2$, find the nodes masked when
+        Given a node $v$ with $|Preds(v)| \geq 2$, find the nodes masked when
         taking an edge to $v$
     \end{block}
 
@@ -1526,6 +1539,7 @@ out.sort (cmp_index_map, &ctx.index_map);
             \includegraph{1}{fig12-1}
             \includegraph{2}{fig12-2}
             \includegraph{3}{fig12-3}
+            \includegraph{4}{fig12-4}
         \end{column}
     \end{columns}
 \end{frame}
@@ -1550,26 +1564,26 @@ out.sort (cmp_index_map, &ctx.index_map);
 
 \begin{frame}[fragile]
     \begin{columns}
-        \begin{column}{0.4\textwidth}
+        \begin{column}{0.6\textwidth}
+            \centering
             \lstinline{A && ((B && C) || D)}
-            \begin{block}{}<3->
+            \onslide<3->{
                 \begin{tabular}{l l}
                     $(c, t)$ & short circuits \\
                     $(d, t)$ & masks \\
                     $c < d$ \\
                 \end{tabular}
-            \end{block}
-            \begin{block}{}
-                \begin{align*}
-                    \disponslide{4-}{S_\Omega} & \disponslide{4-}{= c} \\
-                    \disponslide{4-}{O_S} & \disponslide{4-}{= Succ(c) = \set{d, t}}  \\
-                    \disponslide{5-}{S_0} & \disponslide{5-}{= d, t} \\
-                    \disponslide{6-}{S_1} & \disponslide{6-}{= S_0 + c = \set{d, t, c}} \\
-                    \disponslide{7-}{S_2} & \disponslide{7-}{= S_1 + b = \set{d, t, c}} \\
-                    \disponslide{8-}{S}   & \disponslide{8-}{= S_2 - O_S} \\
-                    \disponslide{8-}{S}   & \disponslide{8-}{=\set{a, b}} \\
-                \end{align*}
-            \end{block}
+            }
+            \begin{align*}
+                \disponslide{4-}{S_\Omega} & \disponslide{4-}{= c} \\
+                \disponslide{4-}{O_S} & \disponslide{4-}{= Succ(c) = \set{d, t}}  \\
+                \disponslide{5-}{S_0} & \disponslide{5-}{= d, t} \\
+                \disponslide{6-}{S_1} & \disponslide{6-}{= S_0 + c = \set{d, t, c}} \\
+                \disponslide{7-}{S_2} & \disponslide{7-}{= S_1 + b = \set{d, t, c, b}} \\
+                \disponslide{7-}{S^f} & \disponslide{7-}{= S_2} \\
+                \disponslide{8-}{S}   & \disponslide{8-}{= S^f - O_S} \\
+                \disponslide{8-}{S}   & \disponslide{8-}{=\set{b, c}} \\
+            \end{align*}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -1644,9 +1658,45 @@ out.sort (cmp_index_map, &ctx.index_map);
             \item Higher confidence in correctness
             \item Programs become "higher level"
             \item Very strong documentation-of-intent, malleable
-            \item Fast to complete
+            \item Fast to complete programs
         \end{itemize}
     \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{lstlisting}
+if (a && b && c)
+    x = 1;
+            \end{lstlisting}
+        \end{column}
+
+        \begin{column}{0.5\textwidth}
+            \centering
+            \begin{lstlisting}
+if (a)
+    if (b)
+        if (c)
+            x = 1;
+            \end{lstlisting}
+        \end{column}
+    \end{columns}
+
+    \centering
+    \pause
+    \begin{lstlisting}
+    #####:    2:    if (a && b && c)
+condition outcomes covered 6/6
+    #####:    3:        x = 1;
+
+    #####:    2:    if (a)
+    #####:    3:        if (b)
+    #####:    4:            if (c)
+    #####:    5:                x = 1;
+condition outcomes covered 6/6
+    \end{lstlisting}
 \end{frame}
 
 \end{document}
