@@ -1,0 +1,16 @@
+digraph {
+    a [fillcolor = lightblue, style = filled];
+    b [fillcolor = lightblue, style = filled];
+    c [fillcolor = lightblue, style = filled];
+    n0 [label = 0];
+
+    n0 -> a;
+    a -> b;
+    a -> c;
+    b -> t;
+    b -> c;
+    c -> t;
+    c -> f;
+    t -> e;
+    f -> e;
+}
