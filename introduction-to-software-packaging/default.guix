@@ -1,0 +1,51 @@
+(use-modules (guix)
+             (guix packages)
+             (guix download)
+             (guix build-system gnu)
+             (guix build-system copy)
+             (gnu packages haskell-xyz)
+             (guix licenses))
+
+(define-public revealjs
+  (package
+    (name "reveal.js")
+    (version "4.6.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/hakimel/" name
+                                  "/archive/" version ".tar.gz"))
+              (sha256 (base32
+                "0rxf8chx513dwm21ssc3v6dj1yfh01g7g9fy1xb1hs1zvzcl3lnb"))))
+    (build-system copy-build-system)
+    (home-page (string-append "https://github.com/hakimel/" name))
+    (synopsis "Framework for presentations in the browser")
+    (description synopsis)
+    (license expat)))
+
+
+(define-public course
+  (package
+    (name "slides")
+    (version "0.0.0")
+    (source (local-file "." "guile-checkout" #:recursive? #t))
+    (build-system gnu-build-system) 
+    (native-inputs (list pandoc revealjs))
+    (arguments
+      `(#:phases
+        (modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'check)
+          (replace 'install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((outdir (assoc-ref outputs "out"))
+                    (revealjs (assoc-ref inputs "reveal.js")))
+                (invoke "make" "-B" "install" (string-append "PREFIX=" outdir))
+                (copy-recursively revealjs (string-append outdir "/reveal.js"))
+                #true))))))
+
+    (synopsis "Presentation material for git beyond push & pull")
+    (description "Presentation")
+    (home-page "")
+    (license bsd-3)))
+
+course
