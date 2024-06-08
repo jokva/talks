@@ -22,7 +22,7 @@ date: "2023-09-21"
 
 ---
 
-I have done _all_ of these things
+I do _all_ of these things
 
 ---
 
